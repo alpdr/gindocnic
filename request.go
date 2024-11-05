@@ -1,4 +1,4 @@
-package internal
+package gindocnic
 
 // AddRequest Operationにリクエストを追加します。
 func (o *PathItemSpec) AddRequest(body any, opts ...requestOption) {

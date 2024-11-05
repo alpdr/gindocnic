@@ -1,4 +1,4 @@
-package internal
+package gindocnic
 
 // go-playground/validatorのタグのついた構造体からswaggest/jsonschema-goのタグのついた構造体をつくるAPIです。
 import (

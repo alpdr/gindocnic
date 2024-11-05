@@ -1,0 +1,2 @@
+// Package gindocnic
+package gindocnic

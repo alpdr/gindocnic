@@ -1,4 +1,4 @@
-package internal
+package gindocnic
 
 func ResponseStatus(status int) responseOption {
 	return func(r *responseOptions) {

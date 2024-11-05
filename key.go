@@ -1,4 +1,4 @@
-package internal
+package gindocnic
 
 import "github.com/gin-gonic/gin"
 

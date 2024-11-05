@@ -1,4 +1,4 @@
-package internal
+package gindocnic
 
 // API全体の情報(ライセンスやAPIの説明)を指定するためのAPIを提供します。
 // これらのAPIは、指定しないとredocのlintが警告するので用意したであり、

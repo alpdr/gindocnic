@@ -1,4 +1,4 @@
-package internal
+package gindocnic
 
 func filterNonAlphaNumeric(s string) string {
 	bytes := []byte(s)
