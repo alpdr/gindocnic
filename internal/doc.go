@@ -1,2 +1,2 @@
-// package internal
+// Package internal
 package internal
