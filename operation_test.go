@@ -9,48 +9,6 @@ import (
 	"testing"
 )
 
-// func TestKeywords(t *testing.T) {
-// 	t.Parallel()
-// 	r := gin.Default()
-// 	sut := NewDoc()
-
-// 	request := struct {
-// 		Title string `json:"title" binding:"required"`
-// 	}{
-// 		Title: "title",
-// 	}
-// 	spec := func(p *PathItemSpec) {
-// 		p.AddRequest(request)
-// 	}
-
-// 	r.POST("/posts", sut.Operation(func(c *gin.Context) {}, spec))
-
-// 	if err := sut.AssocRoutesInfo(r.Routes()); err != nil {
-// 		t.Error(err)
-// 	}
-// 	yml, err := sut.MarshalYAML()
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	doc, err := openapi3.NewLoader().LoadFromData(yml)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	item := doc.Paths.Find("/posts")
-// 	if item == nil {
-// 		t.Error("item not found")
-// 	}
-// 	a := item.Post.RequestBody.Value.Content.Get("application/json").Schema.Value.Required
-// 	fmt.Printf("%#v\n", a)
-// 	title, err := item.Post.RequestBody.JSONLookup("title")
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	fmt.Println(title)
-// 	f, err := os.Create("temp.yml")
-// 	f.Write(yml)
-// }
-
 func TestRequestBody(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
