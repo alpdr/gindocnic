@@ -1,11 +1,24 @@
-.PHONY: help
+
 .DEFAULT_GOAL := help
+
+.PHONY: help lint test
+
+
+##@
+##@ tools
+##@
+
+test: lint ##@ Runs the tests
+	go test -v ./...
+
+lint: ##@ Examines source code and reports suspicious constructs
+	go vet ./...
 
 ##@
 ##@ Misc commands
 ##@
 # Reference: https://gist.github.com/prwhite/8168133?permalink_comment_id=4744119#gistcomment-4744119
-help: ##@ (Default) Print listing of key targets with their descriptions
+help: ##@ (Default) Display this message
 	@printf "\nUsage: make <command>\n"
 	@grep -F -h "##@" $(MAKEFILE_LIST) | grep -F -v grep -F | sed -e 's/\\$$//' | awk 'BEGIN {FS = ":*[[:space:]]*##@[[:space:]]*"}; \
 	{ \
