@@ -6,7 +6,7 @@ import (
 	"github.com/swaggest/openapi-go/openapi31"
 )
 
-// Doc OpenAPI定義書の全体の情報をもちます。
+// Doc represents the root of an OpenAPIv3.1 document.
 type Doc struct {
 	reflector *openapi31.Reflector
 	// handlerNameToOptionsにあるoperationKeyに対応するPathItemSpecをもちます。
@@ -17,7 +17,7 @@ type Doc struct {
 	handlerNameToOptions map[string][]operationKey
 }
 
-// NewDoc Docを作り、そのポインタを返します。
+// NewDoc returns `*Doc`.
 func NewDoc() *Doc {
 	return &Doc{
 		reflector:            openapi31.NewReflector(),
@@ -65,7 +65,7 @@ func (d *Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 	return nil
 }
 
-// MarshalYAML yaml形式のOpen API定義をバイト列で返します。
+// MarshalYAML returns the YAML encoding of Doc.
 func (d *Doc) MarshalYAML() ([]byte, error) {
 	return d.reflector.Spec.MarshalYAML()
 }
