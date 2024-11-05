@@ -6,6 +6,7 @@ import (
 )
 
 func TestGenerateOpenAPI31(t *testing.T) {
+	t.Parallel()
 	sut := NewDoc()
 
 	bytes, err := sut.MarshalYAML()
