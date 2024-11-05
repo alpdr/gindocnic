@@ -1,15 +1,17 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help lint test
+.PHONY: help lint test build
 
 
 ##@
 ##@ tools
 ##@
-
-test: lint ##@ Runs the tests
+test: build lint ##@ Runs the tests
 	go test -v ./...
+
+build: ##@ Builds the project
+	go build ./...
 
 lint: ##@ Examines source code and reports suspicious constructs
 	go vet ./...
