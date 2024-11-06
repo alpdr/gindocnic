@@ -1,5 +1,9 @@
 package gindocnic
 
+import (
+	"reflect"
+)
+
 // AddRequest configures operation request schema.
 func (o *PathItemSpec) AddRequest(body any, opts ...requestOption) {
 	r := requestOptions{
@@ -26,6 +30,6 @@ type requestOptions struct {
 
 type requestOption func(r *requestOptions)
 
-func (r requestOptions) convertStruct(starParams map[string]bool) (any, error) {
-	return convertStruct(r.in, starParams)
+func (r requestOptions) convertStruct(starParams map[string]bool, hook *func(tag reflect.StructTag)) (any, error) {
+	return convertStruct(r.in, starParams, hook)
 }

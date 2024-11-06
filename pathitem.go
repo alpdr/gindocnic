@@ -3,21 +3,18 @@ package gindocnic
 import (
 	og "github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi31"
+	"reflect"
 )
 
-// PathItemSpec [path-item-object]の生成に必要な情報をもちます。
-// もともとはOperationOptionsという名前でしたが、[コードレビューのコメント]とoperationより上位の
-// path-itemのスキーマにあるhttp methodやpathを含む構造体なので、PathItemSpecに名前を変えました。
-// [コードレビューのコメント]: https://github.com/alpdr/data-platform/pull/481#discussion_r1804170012
+// PathItemSpec represents the fields of a Path Item Object.
 // [path-item-object]: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-item-object
 type PathItemSpec struct {
-	httpMethod          string
-	path                string
-	summary             string
-	requestBodyRequired *bool
-	requests            []requestOptions
-	responses           []responseOptions
-	id                  string
+	httpMethod string
+	path       string
+	summary    string
+	requests   []requestOptions
+	responses  []responseOptions
+	id         string
 }
 
 func (o *PathItemSpec) SetSummary(s string) {
@@ -49,42 +46,6 @@ func (o *PathItemSpec) setIdIfUndefined(id string) {
 	}
 }
 
-func (o *PathItemSpec) makeOperation(r openapi31.Reflector) (og.OperationContext, error) {
-	openAPIPath := makeGinToOpenAPIPath(o.path)
-	oc, err := r.NewOperationContext(o.httpMethod, openAPIPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// サマリーとIDを設定しないとredocの警告が出ます。
-	// ? Open APIの仕様で必須
-	oc.SetSummary(o.summary)
-	oc.SetID(o.id)
-
-	starParams := findStarParams(openAPIPath)
-	for _, req := range o.requests {
-		convertedIn, err := convertStruct(req.in, starParams)
-		if err != nil {
-			return nil, err
-		}
-		oc.AddReqStructure(convertedIn, func(cu *og.ContentUnit) {
-			if req.contentType != "" {
-				cu.ContentType = req.contentType
-			}
-		})
-	}
-
-	for _, resp := range o.responses {
-		convertedResp, err := convertStruct(resp.body, starParams)
-		if err != nil {
-			return nil, err
-		}
-		oc.AddRespStructure(convertedResp, og.WithHTTPStatus(resp.status))
-	}
-
-	return oc, nil
-}
-
 // PathItemSpecFunc
 type PathItemSpecFunc func(o *PathItemSpec)
 
@@ -109,6 +70,7 @@ func PathItemSpecPath(path string) PathItemSpecFunc {
 	}
 }
 
+// addPathItem adds a Path Item Object to the OpenAPI document.
 func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) error {
 	openAPIPath := makeGinToOpenAPIPath(pathItemSpec.path)
 	oc, err := reflector.NewOperationContext(pathItemSpec.httpMethod, openAPIPath)
@@ -122,8 +84,14 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	oc.SetID(pathItemSpec.id)
 
 	starParams := findStarParams(openAPIPath)
+	containsRequestBody := false
+	hook := func(tag reflect.StructTag) {
+		if _, ok := tag.Lookup("json"); ok {
+			containsRequestBody = true
+		}
+	}
 	for _, req := range pathItemSpec.requests {
-		convertedIn, err := convertStruct(req.in, starParams)
+		convertedIn, err := req.convertStruct(starParams, &hook)
 		if err != nil {
 			return err
 		}
@@ -135,7 +103,7 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	}
 
 	for _, resp := range pathItemSpec.responses {
-		convertedResp, err := convertStruct(resp.body, starParams)
+		convertedResp, err := convertStruct(resp.body, starParams, nil)
 		if err != nil {
 			return err
 		}
@@ -145,6 +113,10 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	if err := reflector.AddOperation(oc); err != nil {
 		return nil
 	}
+	if containsRequestBody {
+		setRequestBodyRequired(pathItemSpec, reflector.Spec.Paths.MapOfPathItemValues)
+	}
+
 	return nil
 
 }
