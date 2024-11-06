@@ -25,3 +25,7 @@ type requestOptions struct {
 }
 
 type requestOption func(r *requestOptions)
+
+func (r requestOptions) convertStruct(starParams map[string]bool) (any, error) {
+	return convertStruct(r.in, starParams)
+}

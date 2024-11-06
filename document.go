@@ -43,22 +43,17 @@ func (d *Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 			key = keys[0]
 		}
 
-		options, ok := d.pathItemSpecs[key]
+		pathItemSpec, ok := d.pathItemSpecs[key]
 		if !ok {
 			return fmt.Errorf("the operation options for %#v was not found", route)
 		}
 
-		options.setMethodIfUndefined(route.Method)
-		options.setPathIfUndefined(route.Path)
+		pathItemSpec.setMethodIfUndefined(route.Method)
+		pathItemSpec.setPathIfUndefined(route.Path)
 		// ハンドラ名から名前をつけるとソースコードの情報が露出するのでパスに由来する名前にします。
-		options.setIdIfUndefined(filterNonAlphaNumeric(options.path) + fmt.Sprintf("%d", i))
+		pathItemSpec.setIdIfUndefined(filterNonAlphaNumeric(pathItemSpec.path) + fmt.Sprintf("%d", i))
 
-		oc, err := options.newOperation(*d.reflector)
-		if err != nil {
-			return err
-		}
-
-		if err := d.reflector.AddOperation(oc); err != nil {
+		if err := addPathItem(d.reflector, pathItemSpec); err != nil {
 			return err
 		}
 	}
