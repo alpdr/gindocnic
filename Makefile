@@ -1,11 +1,11 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help lint test build
+.PHONY: help lint test build index
 
 
 ##@
-##@ tools
+##@ Utilities
 ##@
 test: build lint ##@ Runs the tests
 	go test -v ./...
@@ -15,6 +15,11 @@ build: ##@ Builds the project
 
 lint: ##@ Examines source code and reports suspicious constructs
 	go vet ./...
+
+GIT_TAG ?= v0.0.0
+
+index: ##@ GIT_TAG=<release version> Prompt Go to update its index of modules with information about the module you’re publishing.
+	GOPROXY=proxy.golang.org go list -m github.com/alpdr/gindocnic@$(GIT_TAG)
 
 ##@
 ##@ Misc commands

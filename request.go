@@ -1,6 +1,6 @@
 package gindocnic
 
-// AddRequest Operationにリクエストを追加します。
+// AddRequest configures operation request schema.
 func (o *PathItemSpec) AddRequest(body any, opts ...requestOption) {
 	r := requestOptions{
 		in: body,
