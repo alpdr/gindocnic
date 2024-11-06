@@ -26,7 +26,7 @@ func NewDoc() *Doc {
 	}
 }
 
-// AssocRoutesInfo リクエストハンドラをパスやHTTPメソッドと関連づけて、Open API仕様書に必要な情報をそろえます。
+// AssocRoutesInfo associates HTTP paths and methods with their corresponding handlers to generate path item objects.
 func (d *Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 	for i, route := range routes {
 
