@@ -121,13 +121,13 @@ func (d *Doc) Operation(h gin.HandlerFunc, opts ...PathItemSpecFunc) gin.Handler
 		opt(ops)
 	}
 	handlerName := nameHandlerAfterGin(h)
-	operationKey := operationKey{
+	operationKey := pathItemSpecKey{
 		handler: handlerName,
 		method:  ops.httpMethod,
 		path:    ops.path,
 	}
-	d.handlerNameToOptions[handlerName] = append(d.handlerNameToOptions[handlerName], operationKey)
-	d.operationOptions[operationKey] = *ops
+	d.handlerToPathItems[handlerName] = append(d.handlerToPathItems[handlerName], operationKey)
+	d.pathItemSpecs[operationKey] = *ops
 	return h
 }
 
