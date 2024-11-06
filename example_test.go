@@ -2,9 +2,12 @@ package gindocnic_test
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"os"
+
 	"github.com/alpdr/gindocnic"
 	"github.com/gin-gonic/gin"
-	"log"
 )
 
 type Request struct {
@@ -14,6 +17,10 @@ type Request struct {
 // Example
 func Example() {
 	doc := gindocnic.NewDoc()
+	gin.DefaultWriter = io.Discard
+	defer func() {
+		gin.DefaultWriter = os.Stdout
+	}()
 	r := gin.Default()
 
 	request := Request{}
