@@ -40,7 +40,7 @@ func TestConvertStruct(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			res, err := convertStruct(tt.v, tt.ignore)
+			res, err := convertStruct(tt.v, tt.ignore, nil)
 			tt.assertion(res, err)
 		})
 	}

@@ -10,19 +10,19 @@ import (
 type Doc struct {
 	reflector *openapi31.Reflector
 	// handlerNameToOptionsにあるoperationKeyに対応するPathItemSpecをもちます。
-	operationOptions map[operationKey]PathItemSpec
+	pathItemSpecs map[pathItemSpecKey]PathItemSpec
 	// どのルーティング先がどのハンドラを共有していて、
 	// ハンドラ名だけでルーティング先を特定できないかを管理しています。
 	// 値の要素が1つであれば、ハンドラ名だけでルーティング先を特定できます。
-	handlerNameToOptions map[string][]operationKey
+	handlerToPathItems map[string][]pathItemSpecKey
 }
 
 // NewDoc returns *Doc.
 func NewDoc() *Doc {
 	return &Doc{
-		reflector:            openapi31.NewReflector(),
-		operationOptions:     make(map[operationKey]PathItemSpec),
-		handlerNameToOptions: make(map[string][]operationKey),
+		reflector:          openapi31.NewReflector(),
+		pathItemSpecs:      make(map[pathItemSpecKey]PathItemSpec),
+		handlerToPathItems: make(map[string][]pathItemSpecKey),
 	}
 }
 
@@ -30,12 +30,12 @@ func NewDoc() *Doc {
 func (d *Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 	for i, route := range routes {
 
-		keys, ok := d.handlerNameToOptions[route.Handler]
+		keys, ok := d.handlerToPathItems[route.Handler]
 		if !ok || len(keys) == 0 {
 			// Open API定義に記述しないハンドラを無視します。
 			continue
 		}
-		var key operationKey
+		var key pathItemSpecKey
 
 		if len(keys) > 1 {
 			key = makeKey(route)
@@ -43,22 +43,17 @@ func (d *Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 			key = keys[0]
 		}
 
-		options, ok := d.operationOptions[key]
+		pathItemSpec, ok := d.pathItemSpecs[key]
 		if !ok {
 			return fmt.Errorf("the operation options for %#v was not found", route)
 		}
 
-		options.setMethodIfUndefined(route.Method)
-		options.setPathIfUndefined(route.Path)
+		pathItemSpec.setMethodIfUndefined(route.Method)
+		pathItemSpec.setPathIfUndefined(route.Path)
 		// ハンドラ名から名前をつけるとソースコードの情報が露出するのでパスに由来する名前にします。
-		options.setIdIfUndefined(filterNonAlphaNumeric(options.path) + fmt.Sprintf("%d", i))
+		pathItemSpec.setIdIfUndefined(filterNonAlphaNumeric(pathItemSpec.path) + fmt.Sprintf("%d", i))
 
-		oc, err := options.newOperation(*d.reflector)
-		if err != nil {
-			return err
-		}
-
-		if err := d.reflector.AddOperation(oc); err != nil {
+		if err := addPathItem(d.reflector, pathItemSpec); err != nil {
 			return err
 		}
 	}

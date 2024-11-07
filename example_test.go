@@ -148,6 +148,7 @@ func Example() {
 	//               required:
 	//               - id
 	//               type: object
+	//         required: true
 	//       responses:
 	//         "201":
 	//           content:
