@@ -8,10 +8,9 @@ import (
 	"runtime"
 )
 
-// PathItemSpec [path-item-object]の生成に必要な情報をもちます。
-// もともとはOperationOptionsという名前でしたが、[コードレビューのコメント]とoperationより上位の
-// path-itemのスキーマにあるhttp methodやpathを含む構造体なので、PathItemSpecに名前を変えました。
-// [コードレビューのコメント]: https://github.com/alpdr/data-platform/pull/481#discussion_r1804170012
+// PathItemSpec describes the operations available on a single path.
+// This struct is roughly equivalent to [path-item-object].
+//
 // [path-item-object]: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-item-object
 type PathItemSpec struct {
 	httpMethod string

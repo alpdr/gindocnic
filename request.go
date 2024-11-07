@@ -11,8 +11,7 @@ func (o *PathItemSpec) AddRequest(body any, opts ...requestOption) {
 	o.requests = append(o.requests, r)
 }
 
-// RequestContentType リクエストのContent-Typeを設定します。
-// AddRequestの可変長引数に渡してください。
+// RequestContentType defines the content type of the request.
 func RequestContentType(contentType string) func(ro *requestOptions) {
 	return func(ro *requestOptions) {
 		ro.contentType = contentType

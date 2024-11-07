@@ -8,32 +8,29 @@ import (
 	"github.com/swaggest/openapi-go/openapi31"
 )
 
-// WithServer [server]を登録します。
+// Server represents [server].
+//
+// [server]: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#server-object
+type Server struct {
+	URL string
+}
+
+// WithServer sets a [server].
+//
 // [server]: https://spec.openapis.org/oas/v3.1.0.html#server-object
-func (d *Doc) WithServer(url string) *Doc {
-	d.reflector.Spec.WithServers(openapi31.Server{URL: url})
+func (d *Doc) WithServer(server Server) *Doc {
+	d.reflector.Spec.WithServers(server.swaggestServer())
 	return d
 }
 
-// WithSecurity [Security Scheme Object]を登録します。
-// 一部のAPIで求められる認証の形式を宣言します。Basic認証やOpen ID Connectなどを指定できます。
-// Open APIの仕様上必須のフィールドらしいです。
-// [Security Scheme Object]: https://spec.openapis.org/oas/v3.1.0.html#security-scheme-object
-func (d *Doc) WithSecurity(securities map[string][]string) *Doc {
-	d.reflector.Spec.WithSecurity(securities)
+// WithNoneSecurities includes an empty security requirement ({}) in [Security Scheme Object].
+//
+// [Security Scheme Object]: https://spec.openapis.org/oas/v3.1.0.html#server-object
+func (d *Doc) WithNoneSecurities() *Doc {
+	d.reflector.Spec.WithSecurity(make(map[string][]string))
 	return d
 }
 
-// WithSummary [info-object]のsummaryを登録します。
-// [info-object]: https://spec.openapis.org/oas/v3.1.0.html#info-object
-func (d *Doc) WithSummary(summary string) *Doc {
-	d.reflector.Spec.Info.WithSummary(summary)
-	return d
-}
-
-// WithSummary [info-object]のlicenseを登録します。
-// [info-object]: https://spec.openapis.org/oas/v3.1.0.html#info-object
-func (d *Doc) WithLicense(name, url string) *Doc {
-	d.reflector.Spec.Info.WithLicense(openapi31.License{Name: name, URL: &url})
-	return d
+func (s Server) swaggestServer() openapi31.Server {
+	return openapi31.Server{URL: s.URL}
 }

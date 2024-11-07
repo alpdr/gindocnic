@@ -17,7 +17,7 @@ type Doc struct {
 	handlerNameToOptions map[string][]operationKey
 }
 
-// NewDoc returns `*Doc`.
+// NewDoc returns *Doc.
 func NewDoc() *Doc {
 	return &Doc{
 		reflector:            openapi31.NewReflector(),
