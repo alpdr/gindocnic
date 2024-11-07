@@ -30,6 +30,18 @@ func TestRequestBody(t *testing.T) {
 			}
 			return nil
 		}},
+		{name: `pattern:"<regex>" tag indicates the expected regex pattern for the corresponding field in the OpenAPI document.`, request: struct {
+			Title string `json:"title" pattern:"^[a-zA-Z]+$"`
+		}{
+			Title: "title",
+		}, assert: func(s *openapi3.SchemaRef) error {
+			pattern := s.Value.Properties["title"].Value.Pattern
+			if pattern != "^[a-zA-Z]+$" {
+				return fmt.Errorf("unexpected pattern: %v", pattern)
+			}
+			return nil
+		},
+		},
 	}
 
 	for _, test := range tests {

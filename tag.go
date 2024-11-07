@@ -12,7 +12,7 @@ func makeOpenAPITag(sf reflect.StructTag, ignoreParams map[string]bool) reflect.
 	if v, ok := sf.Lookup("uri"); ok && !ignoreParams[v] {
 		res += fmt.Sprintf(`path:"%s" `, v)
 	}
-	for _, keyword := range []string{"query", "json", "form", "header", "cookie", "example"} {
+	for _, keyword := range []string{"query", "json", "form", "header", "cookie", "example", "pattern"} {
 		if v, ok := sf.Lookup(keyword); ok {
 			res += fmt.Sprintf(`%s:"%s" `, keyword, v)
 		}

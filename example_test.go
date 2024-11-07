@@ -1,20 +1,30 @@
-package gindocnic
+package gindocnic_test
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"os"
 
+	"github.com/alpdr/gindocnic"
 	"github.com/gin-gonic/gin"
 )
 
+type Request struct {
+	Id int `json:"id" binding:"required"`
+}
+
+// Example
 func Example() {
-	doc := NewDoc()
+	doc := gindocnic.NewDoc()
+	gin.DefaultWriter = io.Discard
+	defer func() {
+		gin.DefaultWriter = os.Stdout
+	}()
 	r := gin.Default()
 
-	request := struct {
-		Id int `json:"id" binding:"required"`
-	}{}
-	spec := func(p *PathItemSpec) {
+	request := Request{}
+	spec := func(p *gindocnic.PathItemSpec) {
 		p.AddRequest(request)
 	}
 	r.POST("/pets", doc.Operation(func(c *gin.Context) {}, spec))
@@ -49,5 +59,4 @@ func Example() {
 	//         "204":
 	//           description: No Content
 	//       summary: ""
-
 }
