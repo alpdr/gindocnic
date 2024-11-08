@@ -2,17 +2,17 @@ package gindocnic
 
 import "github.com/gin-gonic/gin"
 
-// operationKey ginのRouteInfoと同型です。
+// pathItemSpecKey ginのRouteInfoと同型です。
 // DocのもつハンドラとRouteInfoがもつハンドラと同一かどうか判定するためのキーです。
-type operationKey struct {
+type pathItemSpecKey struct {
 	method  string
 	path    string
 	handler string
 }
 
 // makeKey ginのRouteInfoからoperationKeyを生成します。
-func makeKey(r gin.RouteInfo) operationKey {
-	return operationKey{
+func makeKey(r gin.RouteInfo) pathItemSpecKey {
+	return pathItemSpecKey{
 		method:  r.Method,
 		path:    r.Path,
 		handler: r.Handler,

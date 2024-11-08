@@ -2,12 +2,11 @@ package gindocnic_test
 
 import (
 	"fmt"
+	"github.com/alpdr/gindocnic"
+	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"os"
-
-	"github.com/alpdr/gindocnic"
-	"github.com/gin-gonic/gin"
 )
 
 type Request struct {
@@ -55,6 +54,7 @@ func Example() {
 	//               required:
 	//               - id
 	//               type: object
+	//         required: true
 	//       responses:
 	//         "204":
 	//           description: No Content

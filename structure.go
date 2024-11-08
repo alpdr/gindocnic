@@ -8,25 +8,25 @@ import (
 
 // go-playground/validatorのタグのついた構造体からswaggest/jsonschema-goのタグのついた構造体のゼロ値を生成します。
 // ignoreParamsに指定されたuriのパラメタは無視されます。
-func convertStruct(s any, ignoreParams map[string]bool) (any, error) {
+func convertStruct(s any, ignoreParams map[string]bool, hook *func(tag reflect.StructTag)) (any, error) {
 	v := reflect.ValueOf(s)
 	if v.Kind() == reflect.Ptr {
-		return convertStruct(v.Elem().Interface(), ignoreParams)
+		return convertStruct(v.Elem().Interface(), ignoreParams, hook)
 	}
 	if v.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("the kind of %#v was not struct", s)
 	}
-	res, err := makeStruct(s, ignoreParams)
+	res, err := makeStruct(s, ignoreParams, hook)
 	if err != nil {
 		return nil, err
 	}
 	return reflect.New(res).Elem().Interface(), nil
 }
 
-func makeStruct(s any, ignoreParams map[string]bool) (reflect.Type, error) {
+func makeStruct(s any, ignoreParams map[string]bool, hook *func(tag reflect.StructTag)) (reflect.Type, error) {
 	v := reflect.ValueOf(s)
 	if v.Kind() == reflect.Ptr {
-		return makeStruct(v.Elem().Interface(), ignoreParams)
+		return makeStruct(v.Elem().Interface(), ignoreParams, hook)
 	}
 	if v.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("the kind of %#v was not struct", s)
@@ -35,7 +35,7 @@ func makeStruct(s any, ignoreParams map[string]bool) (reflect.Type, error) {
 	fields := make([]reflect.StructField, 0, n)
 	for i := range n {
 		fs := v.Type().Field(i)
-		if f, err := makeStructField(v.Field(i), fs, ignoreParams); err != nil {
+		if f, err := makeStructField(v.Field(i), fs, ignoreParams, hook); err != nil {
 			return nil, err
 		} else {
 			fields = append(fields, f)
@@ -52,21 +52,24 @@ func makeStruct(s any, ignoreParams map[string]bool) (reflect.Type, error) {
 
 }
 
-func makeStructField(v reflect.Value, sf reflect.StructField, ignoreParams map[string]bool) (reflect.StructField, error) {
+func makeStructField(v reflect.Value, sf reflect.StructField, ignoreParams map[string]bool, hook *func(tag reflect.StructTag)) (reflect.StructField, error) {
 	if v.Kind() == reflect.Ptr {
-		return makeStructField(v.Elem(), sf, ignoreParams)
+		return makeStructField(v.Elem(), sf, ignoreParams, hook)
 	}
-
 	if v.Kind() == reflect.Struct {
-		if t, err := makeStruct(v.Interface(), ignoreParams); err != nil {
+		if t, err := makeStruct(v.Interface(), ignoreParams, hook); err != nil {
 			return reflect.StructField{}, err
 		} else {
+
 			return reflect.StructField{
 				Name: sf.Name,
 				Type: t,
-				Tag:  sf.Tag,
+				Tag:  makeOpenAPITag(sf.Tag, ignoreParams),
 			}, nil
 		}
+	}
+	if hook != nil {
+		(*hook)(sf.Tag)
 	}
 	return reflect.StructField{
 		Name: sf.Name,
