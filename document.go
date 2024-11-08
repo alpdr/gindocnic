@@ -17,7 +17,7 @@ type Doc struct {
 	handlerToPathItems map[string][]pathItemSpecKey
 }
 
-// NewDoc returns `*Doc`.
+// NewDoc returns *Doc.
 func NewDoc() *Doc {
 	return &Doc{
 		reflector:          openapi31.NewReflector(),
