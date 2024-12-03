@@ -7,7 +7,7 @@ import (
 )
 
 // Operation configures the path item schema for the HTTP path and method that the handler is registered to.
-func (d *Doc) Operation(h gin.HandlerFunc, opts ...PathItemSpecFunc) gin.HandlerFunc {
+func (d Doc) Operation(h gin.HandlerFunc, opts ...PathItemSpecFunc) gin.HandlerFunc {
 	// r.GET('path', doc.Operation(...))のように書けるようにerrが発生する処理を
 	// OperationOptions.newOperationの呼び出しに移譲します。
 	ops := &PathItemSpec{}

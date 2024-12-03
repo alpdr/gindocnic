@@ -15,9 +15,9 @@ type Doc struct {
 	handlerToPathItems map[string][]pathItemSpecKey
 }
 
-// NewDoc returns *Doc.
-func NewDoc() *Doc {
-	return &Doc{
+// MakeDoc returns *Doc.
+func MakeDoc() Doc {
+	return Doc{
 		reflector:          openapi31.NewReflector(),
 		pathItemSpecs:      make(map[pathItemSpecKey]PathItemSpec),
 		handlerToPathItems: make(map[string][]pathItemSpecKey),
@@ -25,7 +25,7 @@ func NewDoc() *Doc {
 }
 
 // AssocRoutesInfo associates HTTP paths and methods with their corresponding handlers to generate path item objects.
-func (d *Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
+func (d Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 	for i, route := range routes {
 
 		keys, ok := d.handlerToPathItems[route.Handler]
@@ -59,6 +59,6 @@ func (d *Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 }
 
 // MarshalYAML returns the YAML encoding of Doc.
-func (d *Doc) MarshalYAML() ([]byte, error) {
+func (d Doc) MarshalYAML() ([]byte, error) {
 	return d.reflector.Spec.MarshalYAML()
 }

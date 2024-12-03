@@ -52,7 +52,7 @@ func TestRequestBody(t *testing.T) {
 				gin.DefaultWriter = os.Stdout
 			}()
 			r := gin.Default()
-			sut := NewDoc()
+			sut := MakeDoc()
 			spec := func(p *PathItemSpec) {
 				p.AddRequest(test.request)
 			}

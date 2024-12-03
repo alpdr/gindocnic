@@ -18,7 +18,7 @@ type Server struct {
 // WithServer sets a [server].
 //
 // [server]: https://spec.openapis.org/oas/v3.1.0.html#server-object
-func (d *Doc) WithServer(server Server) *Doc {
+func (d Doc) WithServer(server Server) Doc {
 	d.reflector.Spec.WithServers(server.swaggestServer())
 	return d
 }
@@ -26,7 +26,7 @@ func (d *Doc) WithServer(server Server) *Doc {
 // WithoutSecurities includes an empty security requirement ({}) in [Security Scheme Object].
 //
 // [Security Scheme Object]: https://spec.openapis.org/oas/v3.1.0.html#server-object
-func (d *Doc) WithoutSecurities() *Doc {
+func (d Doc) WithoutSecurities() Doc {
 	d.reflector.Spec.WithSecurity(make(map[string][]string))
 	return d
 }

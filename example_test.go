@@ -60,7 +60,7 @@ type Handler struct{}
 
 // Example
 func Example() {
-	doc := gindocnic.NewDoc().
+	doc := gindocnic.MakeDoc().
 		WithServer(gindocnic.Server{URL: "https://github.com/alpdr/gindocnic"}).
 		WithoutSecurities().
 		WithSummary("example API").
