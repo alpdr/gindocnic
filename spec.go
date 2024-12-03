@@ -23,10 +23,10 @@ func (d *Doc) WithServer(server Server) *Doc {
 	return d
 }
 
-// WithNoneSecurities includes an empty security requirement ({}) in [Security Scheme Object].
+// WithoutSecurities includes an empty security requirement ({}) in [Security Scheme Object].
 //
 // [Security Scheme Object]: https://spec.openapis.org/oas/v3.1.0.html#server-object
-func (d *Doc) WithNoneSecurities() *Doc {
+func (d *Doc) WithoutSecurities() *Doc {
 	d.reflector.Spec.WithSecurity(make(map[string][]string))
 	return d
 }

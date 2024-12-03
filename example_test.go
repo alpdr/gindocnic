@@ -62,7 +62,7 @@ type Handler struct{}
 func Example() {
 	doc := gindocnic.NewDoc().
 		WithServer(gindocnic.Server{URL: "https://github.com/alpdr/gindocnic"}).
-		WithNoneSecurities().
+		WithoutSecurities().
 		WithSummary("example API").
 		WithLicense(gindocnic.License{Name: "Proprietary", URL: "https://uzabase.com"})
 

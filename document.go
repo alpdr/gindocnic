@@ -11,9 +11,7 @@ type Doc struct {
 	reflector *openapi31.Reflector
 	// handlerNameToOptionsにあるoperationKeyに対応するPathItemSpecをもちます。
 	pathItemSpecs map[pathItemSpecKey]PathItemSpec
-	// どのルーティング先がどのハンドラを共有していて、
-	// ハンドラ名だけでルーティング先を特定できないかを管理しています。
-	// 値の要素が1つであれば、ハンドラ名だけでルーティング先を特定できます。
+	// Associates each handler with the path items that share the handler.
 	handlerToPathItems map[string][]pathItemSpecKey
 }
 
