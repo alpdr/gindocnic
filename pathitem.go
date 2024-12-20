@@ -1,9 +1,10 @@
 package gindocnic
 
 import (
+	"reflect"
+
 	og "github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi31"
-	"reflect"
 )
 
 // PathItemSpec represents the fields of a Path Item Object.
@@ -27,6 +28,10 @@ func (o *PathItemSpec) SetMethod(method string) {
 
 func (o *PathItemSpec) SetPath(path string) {
 	o.path = path
+}
+
+func (o *PathItemSpec) SetId(id string) {
+	o.id = id
 }
 
 func (o *PathItemSpec) setMethodIfUndefined(httpMethod string) {
