@@ -112,7 +112,14 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 		if err != nil {
 			return err
 		}
-		oc.AddRespStructure(convertedResp, og.WithHTTPStatus(resp.status))
+
+		options := make([]og.ContentOption, 0)
+		options = append(options, og.WithHTTPStatus(resp.status))
+		if(resp.description != "") {
+			options = append(options, withDescription(resp.description))
+		}
+
+		oc.AddRespStructure(convertedResp, options...)
 	}
 
 	if err := reflector.AddOperation(oc); err != nil {
@@ -124,4 +131,10 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 
 	return nil
 
+}
+
+func withDescription(description string) func(cu *og.ContentUnit) {
+	return func(cu *og.ContentUnit) {
+		cu.Description = description
+	}
 }
