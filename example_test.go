@@ -12,7 +12,7 @@ import (
 
 type AddPetRequest struct {
 	ID         int    `json:"id" binding:"required"`
-	CustomerID string `header:"customerId"`
+	CustomerID string `header:"customerId" description:"identifies a customer"`
 	TrackingID string `cookie:"trackingId"`
 }
 
@@ -134,9 +134,11 @@ func Example() {
 	//         name: trackingId
 	//         schema:
 	//           type: string
-	//       - in: header
+	//       - description: identifies a customer
+	//         in: header
 	//         name: customerId
 	//         schema:
+	//           description: identifies a customer
 	//           type: string
 	//       requestBody:
 	//         content:
