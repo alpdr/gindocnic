@@ -6,47 +6,6 @@ import (
 	"testing"
 )
 
-func TestConvertStruct(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		name      string
-		v         any
-		ignore    map[string]bool
-		assertion func(res any, err error)
-	}{
-		{name: "uriタグをpathタグに変換します", v: struct {
-			ID string `uri:"id"`
-		}{}, assertion: func(res any, err error) {
-			if err != nil {
-				t.Errorf("unexpected error: %#v", err)
-			}
-			typ := reflect.TypeOf(res)
-			if typ.NumField() != 1 {
-				t.Errorf("unexpected field number: %d", typ.NumField())
-			}
-			field := typ.Field(0)
-			if field.Name != "ID" {
-				t.Errorf("unexpected field name: %s", field.Name)
-			}
-			if field.Type != reflect.TypeOf("") {
-				t.Errorf("unexpected type: %s", field.Type)
-			}
-			if tag := field.Tag.Get("path"); tag != "id" {
-				t.Errorf("unexpected tag: %s", tag)
-			}
-		}},
-	}
-	for _, tt := range cases {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			res, err := convertStruct(tt.v, tt.ignore, nil)
-			tt.assertion(res, err)
-		})
-	}
-}
-
 func TestGinStructToJsonSchemaGo(t *testing.T) {
 	t.Parallel()
 
@@ -61,7 +20,16 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 				ID string `uri:"id"`
 			}{},
 			expected: struct {
-				ID int `path:"id"`
+				ID string `path:"id"`
+			}{},
+		},
+		{
+			name: "pattern is supporet",
+			input: struct {
+				Message string `json:"message" binding:"required" pattern:"^[a-z]{4}$"`
+			}{},
+			expected: struct {
+				Message string `json:"message" pattern:"^[a-z]{4}$" required:"true"`
 			}{},
 		},
 	}
@@ -99,21 +67,40 @@ func checkEqual(t *testing.T, expected, actual any) error {
 
 func checkStructEqual(t *testing.T, expected, actual any) error {
 	t.Helper()
-	expectedType := reflect.TypeOf(expected)
-	actualType := reflect.TypeOf(actual)
 
-	v := reflect.ValueOf(expected)
-	v.Interface()
+	expectedVal := reflect.ValueOf(expected)
+	actualVal := reflect.ValueOf(actual)
 
-	numFields := expectedType.NumField()
-	if numFields != actualType.NumField() {
-		return fmt.Errorf("field count mismatch: expected %d, got %d", expectedType.NumField(), actualType.NumField())
+	expectedNumFields := expectedVal.NumField()
+	actualNumFields := actualVal.NumField()
+	if expectedNumFields != actualNumFields {
+		return fmt.Errorf("field count mismatch: expected %d, got %d", expectedNumFields, actualNumFields)
 	}
 
-	for i := range numFields {
-		expectedField := expectedType.Field(i)
-		actualField := actualType.Field(i)
+	for i := range expectedNumFields {
+		expectedFieldVal := expectedVal.Field(i)
+		actualFieldVal := actualVal.Field(i)
+		if expectedFieldVal.Kind() != actualFieldVal.Kind() {
+			return fmt.Errorf("field kind mismatch at index %d: expected %s, got %s", i, expectedFieldVal.Kind(), actualFieldVal.Kind())
+		}
+		expectedField := expectedVal.Type().Field(i)
+		actualField := actualVal.Type().Field(i)
+		if expectedField.Name != actualField.Name {
+			return fmt.Errorf("field name mismatch at index %d: expected %s, got %s", i, expectedField.Name, actualField.Name)
+		}
+		if string(expectedField.Tag) != string(actualField.Tag) {
+			fmt.Printf("%v\n", expectedField.Tag == "path:\"id\"")
+			fmt.Printf("%v\n", actualField.Tag == "path:\"id\"")
 
+			return fmt.Errorf("field tag mismatch at index %d: expected %s, got %s", i, expectedField.Tag, actualField.Tag)
+		}
+
+		if expectedFieldVal.Kind() == reflect.Struct {
+			if err := checkStructEqual(t, expectedFieldVal.Interface(), actualFieldVal.Interface()); err != nil {
+				return err
+			}
+		}
 	}
+	return nil
 
 }
