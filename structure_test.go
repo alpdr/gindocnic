@@ -32,6 +32,24 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 				Message string `json:"message" pattern:"^[a-z]{4}$" required:"true"`
 			}{},
 		},
+		{
+			name: "pattern is supporet",
+			input: struct {
+				Message string `json:"message" binding:"required" pattern:"^[a-z]{4}$"`
+			}{},
+			expected: struct {
+				Message string `json:"message" pattern:"^[a-z]{4}$" required:"true"`
+			}{},
+		},
+		{
+			name: "make oneof enum",
+			input: struct {
+				Message string `json:"message" binding:"required,oneof=active inactive pending"`
+			}{},
+			expected: struct {
+				Message string `json:"message" required:"true" enum:"[\"active\",\"inactive\",\"pending\"]"`
+			}{},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -89,9 +107,10 @@ func checkStructEqual(t *testing.T, expected, actual any) error {
 			return fmt.Errorf("field name mismatch at index %d: expected %s, got %s", i, expectedField.Name, actualField.Name)
 		}
 		if string(expectedField.Tag) != string(actualField.Tag) {
-			fmt.Printf("%v\n", expectedField.Tag == "path:\"id\"")
-			fmt.Printf("%v\n", actualField.Tag == "path:\"id\"")
-
+			a, ok := expectedField.Tag.Lookup("enum")
+			if ok {
+				fmt.Printf("actual enum tag: %s\n", a)
+			}
 			return fmt.Errorf("field tag mismatch at index %d: expected %s, got %s", i, expectedField.Tag, actualField.Tag)
 		}
 
