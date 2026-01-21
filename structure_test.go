@@ -15,7 +15,7 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 		expected any
 	}{
 		{
-			name: "Make uri path",
+			name: "Convert uri tag to path tag",
 			input: struct {
 				ID string `uri:"id"`
 			}{},
@@ -24,7 +24,7 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 			}{},
 		},
 		{
-			name: "pattern is supporet",
+			name: "Pattern is supported",
 			input: struct {
 				Message string `json:"message" binding:"required" pattern:"^[a-z]{4}$"`
 			}{},
@@ -33,7 +33,7 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 			}{},
 		},
 		{
-			name: "pattern is supporet",
+			name: "Pattern is supported",
 			input: struct {
 				Message string `json:"message" binding:"required" pattern:"^[a-z]{4}$"`
 			}{},
@@ -42,7 +42,7 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 			}{},
 		},
 		{
-			name: "make oneof enum",
+			name: "Convert oneof to enum",
 			input: struct {
 				Message string `json:"message" binding:"required,oneof=active inactive pending"`
 			}{},

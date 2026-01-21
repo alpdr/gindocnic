@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// makeOpenAPITag go-playground/validatorのタグからswaggest/jsonschema-goのタグを生成します。
+// makeOpenAPITag converts struct tags from go-playground/validator to tags used by swaggest/jsonschema-go.
 func makeOpenAPITag(sf reflect.StructTag, ignoreParams map[string]bool) (reflect.StructTag, error) {
 	var res strings.Builder
 	if v, ok := sf.Lookup("uri"); ok && !ignoreParams[v] {
