@@ -2,16 +2,19 @@ package gindocnic_test
 
 import (
 	"fmt"
-	"github.com/alpdr/gindocnic"
-	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/alpdr/gindocnic"
+	"github.com/gin-gonic/gin"
 )
 
 type AddPetRequest struct {
 	ID         int    `json:"id" binding:"required"`
+	Name       string `json:"name" pattern:"^[a-zA-Z]+$"`
+	Sex        string `json:"sex" binding:"oneof=male female"`
 	CustomerID string `header:"customerId" description:"identifies a customer"`
 	TrackingID string `cookie:"trackingId"`
 }
@@ -87,119 +90,130 @@ func Example() {
 	}
 
 	fmt.Println(string(yml))
-	// Output:
 	// openapi: 3.1.0
 	// info:
-	//   license:
-	//     name: Proprietary
-	//     url: https://uzabase.com
-	//   summary: example API
-	//   title: ""
-	//   version: ""
+	//
+	//	license:
+	//	  name: Proprietary
+	//	  url: https://uzabase.com
+	//	summary: example API
+	//	title: ""
+	//	version: ""
+	//
 	// servers:
 	// - url: https://github.com/alpdr/gindocnic
 	// paths:
-	//   /pets:
-	//     get:
-	//       operationId: pets1
-	//       parameters:
-	//       - in: query
-	//         name: name
-	//         schema:
-	//           type: string
-	//       responses:
-	//         "200":
-	//           content:
-	//             application/json:
-	//               schema:
-	//                 properties:
-	//                   id:
-	//                     type: integer
-	//                 type: object
-	//           description: OK
-	//         "404":
-	//           content:
-	//             application/json:
-	//               schema:
-	//                 properties:
-	//                   error:
-	//                     type: string
-	//                 type: object
-	//           description: Not Found
-	//       summary: Search for pets
-	//     post:
-	//       operationId: pets0
-	//       parameters:
-	//       - in: cookie
-	//         name: trackingId
-	//         schema:
-	//           type: string
-	//       - description: identifies a customer
-	//         in: header
-	//         name: customerId
-	//         schema:
-	//           description: identifies a customer
-	//           type: string
-	//       requestBody:
-	//         content:
-	//           application/json:
-	//             schema:
-	//               properties:
-	//                 id:
-	//                   type: integer
-	//               required:
-	//               - id
-	//               type: object
-	//         required: true
-	//       responses:
-	//         "201":
-	//           content:
-	//             application/json:
-	//               schema:
-	//                 properties:
-	//                   id:
-	//                     type: integer
-	//                 type: object
-	//           description: Created
-	//         "400":
-	//           content:
-	//             application/json:
-	//               schema:
-	//                 properties:
-	//                   error:
-	//                     type: string
-	//                 type: object
-	//           description: Bad Request
-	//       summary: Add a new pet to the store
-	//   /pets/{id}:
-	//     get:
-	//       operationId: petsid2
-	//       parameters:
-	//       - in: path
-	//         name: id
-	//         required: true
-	//         schema:
-	//           type: integer
-	//       responses:
-	//         "200":
-	//           content:
-	//             application/json:
-	//               schema:
-	//                 properties:
-	//                   id:
-	//                     type: integer
-	//                 type: object
-	//           description: OK
-	//         "404":
-	//           content:
-	//             application/json:
-	//               schema:
-	//                 properties:
-	//                   error:
-	//                     type: string
-	//                 type: object
-	//           description: Not Found
-	//       summary: Find a pet
+	//
+	//	/pets:
+	//	  get:
+	//	    operationId: pets1
+	//	    parameters:
+	//	    - in: query
+	//	      name: name
+	//	      schema:
+	//	        type: string
+	//	    responses:
+	//	      "200":
+	//	        content:
+	//	          application/json:
+	//	            schema:
+	//	              properties:
+	//	                id:
+	//	                  type: integer
+	//	              type: object
+	//	        description: OK
+	//	      "404":
+	//	        content:
+	//	          application/json:
+	//	            schema:
+	//	              properties:
+	//	                error:
+	//	                  type: string
+	//	              type: object
+	//	        description: Not Found
+	//	    summary: Search for pets
+	//	  post:
+	//	    operationId: pets0
+	//	    parameters:
+	//	    - in: cookie
+	//	      name: trackingId
+	//	      schema:
+	//	        type: string
+	//	    - description: identifies a customer
+	//	      in: header
+	//	      name: customerId
+	//	      schema:
+	//	        description: identifies a customer
+	//	        type: string
+	//	    requestBody:
+	//	      content:
+	//	        application/json:
+	//	          schema:
+	//	            properties:
+	//	              id:
+	//	                type: integer
+	//	              name:
+	//	                pattern: ^[a-zA-Z]+$
+	//	                type: string
+	//	              sex:
+	//	                enum:
+	//	                - male
+	//	                - female
+	//	                type: string
+	//	            required:
+	//	            - id
+	//	            type: object
+	//	      required: true
+	//	    responses:
+	//	      "201":
+	//	        content:
+	//	          application/json:
+	//	            schema:
+	//	              properties:
+	//	                id:
+	//	                  type: integer
+	//	              type: object
+	//	        description: Created
+	//	      "400":
+	//	        content:
+	//	          application/json:
+	//	            schema:
+	//	              properties:
+	//	                error:
+	//	                  type: string
+	//	              type: object
+	//	        description: Bad Request
+	//	    summary: Add a new pet to the store
+	//	/pets/{id}:
+	//	  get:
+	//	    operationId: petsid2
+	//	    parameters:
+	//	    - in: path
+	//	      name: id
+	//	      required: true
+	//	      schema:
+	//	        type: integer
+	//	    responses:
+	//	      "200":
+	//	        content:
+	//	          application/json:
+	//	            schema:
+	//	              properties:
+	//	                id:
+	//	                  type: integer
+	//	              type: object
+	//	        description: OK
+	//	      "404":
+	//	        content:
+	//	          application/json:
+	//	            schema:
+	//	              properties:
+	//	                error:
+	//	                  type: string
+	//	              type: object
+	//	        description: Not Found
+	//	    summary: Find a pet
+	//
 	// security:
 	// - {}
 }
