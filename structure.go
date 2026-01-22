@@ -60,20 +60,28 @@ func makeStructField(v reflect.Value, sf reflect.StructField, ignoreParams map[s
 		if t, err := makeStruct(v.Interface(), ignoreParams, hook); err != nil {
 			return reflect.StructField{}, err
 		} else {
+			if tag, err := makeOpenAPITag(sf.Tag, ignoreParams); err != nil {
+				return reflect.StructField{}, err
+			} else {
+				return reflect.StructField{
+					Name: sf.Name,
+					Type: t,
+					Tag:  tag,
+				}, nil
+			}
 
-			return reflect.StructField{
-				Name: sf.Name,
-				Type: t,
-				Tag:  makeOpenAPITag(sf.Tag, ignoreParams),
-			}, nil
 		}
 	}
 	if hook != nil {
 		(*hook)(sf.Tag)
 	}
-	return reflect.StructField{
-		Name: sf.Name,
-		Type: sf.Type,
-		Tag:  makeOpenAPITag(sf.Tag, ignoreParams),
-	}, nil
+	if tag, err := makeOpenAPITag(sf.Tag, ignoreParams); err != nil {
+		return reflect.StructField{}, err
+	} else {
+		return reflect.StructField{
+			Name: sf.Name,
+			Type: sf.Type,
+			Tag:  tag,
+		}, nil
+	}
 }
