@@ -8,14 +8,6 @@ import (
 
 // go-playground/validatorのタグのついた構造体からswaggest/jsonschema-goのタグのついた構造体のゼロ値を生成します。
 // ignoreParamsに指定されたuriのパラメタは無視されます。
-//
-// Notes
-// I suppose that reflection approach should be replaced with [jsonschema.InterceptProp] and jsonschema.InterceptSchema because
-// they traverse a struct, and name the generated schema with the struct name.
-// A struct defined in runtime does not have a name.
-// If the intercepters are set to Reflector.DefaultOptions, they convert tags and structures.
-//
-// [jsonschema.InterceptProp]: https://github.com/swaggest/jsonschema-go?tab=readme-ov-file
 func convertStruct(s any, ignoreParams map[string]bool, hook *func(tag reflect.StructTag)) (any, error) {
 	v := reflect.ValueOf(s)
 	if v.Kind() == reflect.Ptr {
