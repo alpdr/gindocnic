@@ -83,8 +83,6 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 		return err
 	}
 
-	// サマリーとIDを設定しないとredocの警告が出ます。
-	// ? Open APIの仕様で必須
 	oc.SetSummary(pathItemSpec.summary)
 	oc.SetID(pathItemSpec.id)
 
@@ -115,7 +113,7 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 
 		options := make([]og.ContentOption, 0)
 		options = append(options, og.WithHTTPStatus(resp.status))
-		if(resp.description != "") {
+		if resp.description != "" {
 			options = append(options, withDescription(resp.description))
 		}
 
@@ -123,10 +121,10 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	}
 
 	if err := reflector.AddOperation(oc); err != nil {
-		return nil
+		return err
 	}
 	if containsRequestBody {
-		setRequestBodyRequired(pathItemSpec, reflector.Spec.Paths.MapOfPathItemValues)
+		return setRequestBodyRequired(pathItemSpec, reflector.Spec.Paths.MapOfPathItemValues)
 	}
 
 	return nil
