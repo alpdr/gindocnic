@@ -2,6 +2,7 @@ package gindocnic
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/swaggest/openapi-go/openapi31"
 )
@@ -48,7 +49,6 @@ func (d Doc) AssocRoutesInfo(routes gin.RoutesInfo) error {
 
 		pathItemSpec.setMethodIfUndefined(route.Method)
 		pathItemSpec.setPathIfUndefined(route.Path)
-		// ハンドラ名から名前をつけるとソースコードの情報が露出するのでパスに由来する名前にします。
 		pathItemSpec.setIdIfUndefined(filterNonAlphaNumeric(pathItemSpec.path) + fmt.Sprintf("%d", i))
 
 		if err := addPathItem(d.reflector, pathItemSpec); err != nil {
