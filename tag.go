@@ -37,7 +37,7 @@ func makeValidation(binding string) (string, error) {
 	for _, validation := range validations {
 		validation = strings.TrimSpace(validation)
 		if validation == "required" {
-			res.WriteString(`required:"true" `)
+			res.WriteString(`required:"true" nullable:"false" `)
 			continue
 		} else if choices, ok := strings.CutPrefix(validation, "oneof="); ok {
 			re := regexp.MustCompile(`'[^']*'|\S+`)

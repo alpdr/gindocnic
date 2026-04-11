@@ -29,7 +29,7 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 				Message string `json:"message" binding:"required" pattern:"^[a-z]{4}$"`
 			}{},
 			expected: struct {
-				Message string `json:"message" pattern:"^[a-z]{4}$" required:"true"`
+				Message string `json:"message" pattern:"^[a-z]{4}$" required:"true" nullable:"false"`
 			}{},
 		},
 		{
@@ -38,7 +38,7 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 				Message string `json:"message" binding:"required" pattern:"^[a-z]{4}$"`
 			}{},
 			expected: struct {
-				Message string `json:"message" pattern:"^[a-z]{4}$" required:"true"`
+				Message string `json:"message" pattern:"^[a-z]{4}$" required:"true" nullable:"false"`
 			}{},
 		},
 		{
@@ -47,7 +47,7 @@ func TestGinStructToJsonSchemaGo(t *testing.T) {
 				Message string `json:"message" binding:"required,oneof=active inactive pending"`
 			}{},
 			expected: struct {
-				Message string `json:"message" required:"true" enum:"[\"active\",\"inactive\",\"pending\"]"`
+				Message string `json:"message" required:"true" nullable:"false" enum:"[\"active\",\"inactive\",\"pending\"]"`
 			}{},
 		},
 	}
