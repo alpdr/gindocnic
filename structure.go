@@ -85,3 +85,29 @@ func makeStructField(v reflect.Value, sf reflect.StructField, ignoreParams map[s
 		}, nil
 	}
 }
+
+func makePathFieldMapping(s any) (map[string]string, error) {
+	v := reflect.ValueOf(s)
+	if v.Kind() == reflect.Ptr {
+		return makePathFieldMapping(v.Elem().Interface())
+	}
+
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("the kind of %#v was not struct", s)
+	}
+
+	mapping := make(map[string]string)
+
+	n := v.NumField()
+	for i := range n {
+		fs := v.Type().Field(i)
+		tag := fs.Tag
+		uriFound, uriOk := tag.Lookup("uri")
+		_, pathOk := tag.Lookup("path")
+		if uriOk && !pathOk {
+			mapping[fs.Name] = uriFound
+		}
+	}
+
+	return mapping, nil
+}

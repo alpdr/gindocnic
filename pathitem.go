@@ -1,8 +1,6 @@
 package gindocnic
 
 import (
-	"reflect"
-
 	og "github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi31"
 )
@@ -87,21 +85,26 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	oc.SetID(pathItemSpec.id)
 
 	starParams := findStarParams(openAPIPath)
-	containsRequestBody := false
-	hook := func(tag reflect.StructTag) {
-		if _, ok := tag.Lookup("json"); ok {
-			containsRequestBody = true
-		}
-	}
+	//containsRequestBody := false
+	// hook := func(tag reflect.StructTag) {
+	// 	if _, ok := tag.Lookup("json"); ok {
+	// 		containsRequestBody = true
+	// 	}
+	// }
 	for _, req := range pathItemSpec.requests {
-		convertedIn, err := req.convertStruct(starParams, &hook)
+		//_, err := req.convertStruct(starParams, &hook)
 		if err != nil {
 			return err
 		}
-		oc.AddReqStructure(convertedIn, func(cu *og.ContentUnit) {
+		mapping, err := makePathFieldMapping(req.in)
+		if err != nil {
+			return err
+		}
+		oc.AddReqStructure(req.in, func(cu *og.ContentUnit) {
 			if req.contentType != "" {
 				cu.ContentType = req.contentType
 			}
+			cu.SetFieldMapping(og.InPath, mapping)
 		})
 	}
 
@@ -123,9 +126,9 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	if err := reflector.AddOperation(oc); err != nil {
 		return err
 	}
-	if containsRequestBody {
-		return setRequestBodyRequired(pathItemSpec, reflector.Spec.Paths.MapOfPathItemValues)
-	}
+	// if containsRequestBody {
+	// 	return setRequestBodyRequired(pathItemSpec, reflector.Spec.Paths.MapOfPathItemValues)
+	// }
 
 	return nil
 

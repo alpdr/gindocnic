@@ -2,8 +2,14 @@ package gindocnic
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
 	"reflect"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 func TestGinStructToJsonSchemaGo(t *testing.T) {
@@ -122,4 +128,89 @@ func checkStructEqual(t *testing.T, expected, actual any) error {
 	}
 	return nil
 
+}
+
+type AddPetRequest struct {
+	//ID         int    `json:"id" binding:"required"`
+	Name       string   `json:"name" binding:"required" pattern:"^[a-zA-Z]+$"`
+	Sex        string   `json:"sex" binding:"oneof=male female"`
+	Emails     []string `json:"emails" binding:"required"`
+	CustomerID string   `header:"customerId" description:"identifies a customer"`
+	TrackingID string   `cookie:"trackingId"`
+}
+
+type Response struct {
+	Id int `json:"id" binding:"required"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func (h *Handler) addSpec(p *PathItemSpec) {
+	p.SetSummary("Add a new pet to the store")
+	p.AddRequest(GetPetRequest{})
+	p.AddRequest(AddPetRequest{})
+	p.AddResponse(Response{}, ResponseStatus(http.StatusCreated))
+	p.AddResponse(ErrorResponse{}, ResponseStatus(http.StatusBadRequest))
+}
+func (h *Handler) addPet(c *gin.Context) {}
+
+type GetPetRequest struct {
+	ID int `uri:"id"`
+}
+
+func (h *Handler) getSpec(p *PathItemSpec) {
+	p.SetSummary("Find a pet")
+	p.AddRequest(GetPetRequest{})
+	p.AddResponse(Response{})
+	p.AddResponse(ErrorResponse{}, ResponseStatus(http.StatusNotFound))
+}
+func (h *Handler) getPet(c *gin.Context) {}
+
+type SearchPetsRequest struct {
+	Name string `query:"name"`
+}
+
+func (h *Handler) searchSpec(p *PathItemSpec) {
+	p.SetSummary("Search for pets")
+	p.AddRequest(SearchPetsRequest{})
+	p.AddResponse(Response{})
+	p.AddResponse(ErrorResponse{}, ResponseStatus(http.StatusNotFound))
+}
+func (h *Handler) searchPets(c *gin.Context) {}
+
+type Handler struct{}
+
+// Example
+func TestExample(t *testing.T) {
+	doc := MakeDoc().
+		WithServer(Server{URL: "https://github.com/alpdr/gindocnic"}).
+		WithoutSecurities().
+		WithSummary("example API").
+		WithLicense(License{Name: "Proprietary", URL: "https://uzabase.com"})
+
+	gin.DefaultWriter = io.Discard
+	defer func() {
+		gin.DefaultWriter = os.Stdout
+	}()
+	r := gin.Default()
+
+	handler := Handler{}
+
+	r.POST("/pets/{id}", doc.Operation(handler.addPet, handler.addSpec))
+	//r.GET("/pets/{id}", doc.Operation(handler.getPet, handler.getSpec))
+	//r.GET("/pets", doc.Operation(handler.searchPets, handler.searchSpec))
+	if err := doc.AssocRoutesInfo(r.Routes()); err != nil {
+		log.Fatalf("%#v", err)
+	}
+	fmt.Printf("%#v\n", doc.reflector.Spec.Paths)
+
+	yml, err := doc.MarshalYAML()
+	if err != nil {
+		log.Fatalf("%#v", err)
+	}
+
+	fmt.Println(string(yml))
+	t.Fail()
 }

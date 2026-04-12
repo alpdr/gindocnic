@@ -2,8 +2,10 @@ package gindocnic
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go/openapi31"
 )
 
@@ -18,8 +20,54 @@ type Doc struct {
 
 // MakeDoc returns [Doc].
 func MakeDoc() Doc {
+	reflector := openapi31.NewReflector()
+
+	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
+		if !params.Processed {
+			return nil
+		}
+
+		fmt.Printf("aaa %v, %v, %s\n", params.Context.Path, params.Field.Name, params.Field.Tag)
+		if binding, ok := params.Field.Tag.Lookup("binding"); ok {
+			elements := strings.Split(binding, ",")
+			foundDive := false
+			for _, element := range elements {
+				element = strings.TrimSpace(element)
+				if "required" == element {
+					params.ParentSchema.Required = append(params.ParentSchema.Required, params.Name)
+					if params.PropertySchema.Type.SimpleTypes != nil {
+						continue
+					}
+					types := params.PropertySchema.Type.SliceOfSimpleTypeValues
+					fmt.Printf("%v\n", types)
+					newTypes := make([]jsonschema.SimpleType, 0)
+					for _, t := range types {
+						if t != jsonschema.Null {
+							newTypes = append(newTypes, t)
+						}
+					}
+					params.PropertySchema.Type.SliceOfSimpleTypeValues = newTypes
+					continue
+				}
+
+				if element == "dive" {
+					foundDive = true
+					continue
+				}
+				if !foundDive && strings.HasPrefix(element, "oneof=") {
+					choices := strings.TrimPrefix(element, "oneof=")
+					choicesList := strings.Fields(choices)
+					for _, choice := range choicesList {
+						params.PropertySchema.Enum = append(params.PropertySchema.Enum, choice)
+					}
+				}
+			}
+		}
+
+		return nil
+	}))
 	return Doc{
-		reflector:          openapi31.NewReflector(),
+		reflector:          reflector,
 		pathItemSpecs:      make(map[pathItemSpecKey]PathItemSpec),
 		handlerToPathItems: make(map[string][]pathItemSpecKey),
 	}
