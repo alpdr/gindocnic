@@ -61,11 +61,11 @@ func TestSchema(t *testing.T) {
 			},
 		},
 		{
-			name: "binding and pattern are required supported",
+			name: "binding, pattern, example and description are supported",
 			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
 				engine.POST("/pets", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
 					p.AddRequest(struct {
-						Name string `json:"name" binding:"required" pattern:"a-zA-Z+"`
+						Name string `json:"name" binding:"required" pattern:"a-zA-Z+" example:"Jane" description:"the name of a pet"`
 					}{})
 				}))
 			},
@@ -76,7 +76,29 @@ func TestSchema(t *testing.T) {
 					t.Errorf("failed to marshal a request body: %v", err)
 				}
 
-				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"name":{"pattern":"a-zA-Z+","type":"string"}},"required":["name"],"type":"object"}}}}` {
+				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"name":{"description":"the name of a pet","examples":["Jane"],"pattern":"a-zA-Z+","type":"string"}},"required":["name"],"type":"object"}}}}` {
+					t.Errorf("unexpected request body: %s", string(json))
+				}
+
+			},
+		},
+		{
+			name: "'oneof' for string is supported. oneof and required can be used together.",
+			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
+				engine.POST("/pets", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
+					p.AddRequest(struct {
+						Sex string `json:"sex" binding:"oneof=male female,required"`
+					}{})
+				}))
+			},
+			assert: func(t *testing.T, actual openapi3.T) {
+				path := actual.Paths.Map()["/pets"]
+				json, err := path.Post.RequestBody.MarshalJSON()
+				if err != nil {
+					t.Errorf("failed to marshal a request body: %v", err)
+				}
+
+				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"sex":{"enum":["male","female"],"type":"string"}},"required":["sex"],"type":"object"}}}}` {
 					t.Errorf("unexpected request body: %s", string(json))
 				}
 
