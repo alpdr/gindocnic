@@ -1,6 +1,8 @@
 package gindocnic
 
 import (
+	"fmt"
+
 	og "github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi31"
 )
@@ -75,7 +77,12 @@ func PathItemSpecPath(path string) PathItemSpecFunc {
 
 // addPathItem adds a Path Item Object to the OpenAPI document.
 func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) error {
+	starParams := findStarParams(pathItemSpec.path)
+	if len(starParams) > 0 {
+		return fmt.Errorf("path parameters with '*' are not supported: %v", starParams)
+	}
 	openAPIPath := makeGinToOpenAPIPath(pathItemSpec.path)
+
 	oc, err := reflector.NewOperationContext(pathItemSpec.httpMethod, openAPIPath)
 	if err != nil {
 		return err
@@ -84,15 +91,7 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	oc.SetSummary(pathItemSpec.summary)
 	oc.SetID(pathItemSpec.id)
 
-	starParams := findStarParams(openAPIPath)
-	//containsRequestBody := false
-	// hook := func(tag reflect.StructTag) {
-	// 	if _, ok := tag.Lookup("json"); ok {
-	// 		containsRequestBody = true
-	// 	}
-	// }
 	for _, req := range pathItemSpec.requests {
-		//_, err := req.convertStruct(starParams, &hook)
 		if err != nil {
 			return err
 		}
@@ -109,10 +108,6 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	}
 
 	for _, resp := range pathItemSpec.responses {
-		convertedResp, err := convertStruct(resp.body, starParams, nil)
-		if err != nil {
-			return err
-		}
 
 		options := make([]og.ContentOption, 0)
 		options = append(options, og.WithHTTPStatus(resp.status))
@@ -120,16 +115,12 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 			options = append(options, withDescription(resp.description))
 		}
 
-		oc.AddRespStructure(convertedResp, options...)
+		oc.AddRespStructure(resp.body, options...)
 	}
 
 	if err := reflector.AddOperation(oc); err != nil {
 		return err
 	}
-	// if containsRequestBody {
-	// 	return setRequestBodyRequired(pathItemSpec, reflector.Spec.Paths.MapOfPathItemValues)
-	// }
-
 	return nil
 
 }

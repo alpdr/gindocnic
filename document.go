@@ -27,7 +27,6 @@ func MakeDoc() Doc {
 			return nil
 		}
 
-		fmt.Printf("aaa %v, %v, %s\n", params.Context.Path, params.Field.Name, params.Field.Tag)
 		if binding, ok := params.Field.Tag.Lookup("binding"); ok {
 			elements := strings.Split(binding, ",")
 			foundDive := false
@@ -39,7 +38,6 @@ func MakeDoc() Doc {
 						continue
 					}
 					types := params.PropertySchema.Type.SliceOfSimpleTypeValues
-					fmt.Printf("%v\n", types)
 					newTypes := make([]jsonschema.SimpleType, 0)
 					for _, t := range types {
 						if t != jsonschema.Null {
