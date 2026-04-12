@@ -39,26 +39,49 @@ func TestSchema(t *testing.T) {
 		name   string
 		act    func(t *testing.T, engine *gin.Engine, doc Doc)
 		assert func(t *testing.T, actual openapi3.T)
-	}{{
-		name: "uri tag is converted to path tag",
-		act: func(t *testing.T, engine *gin.Engine, doc Doc) {
-			engine.GET("/pets/:id", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
-				p.AddRequest(struct {
-					ID string `uri:"id"`
-				}{})
-			}))
+	}{
+		{
+			name: "uri tag is converted to path tag",
+			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
+				engine.GET("/pets/:id", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
+					p.AddRequest(struct {
+						ID string `uri:"id"`
+					}{})
+				}))
+			},
+			assert: func(t *testing.T, actual openapi3.T) {
+				//yml, err:= actual.MarshalYAML()
+				path := actual.Paths.Map()["/pets/{id}"]
+				if path == nil {
+					t.Errorf("path /pets/{id} not found")
+				}
+				if path.Get.Parameters.GetByInAndName("path", "id") == nil {
+					t.Errorf("parameter id was not bound")
+				}
+			},
 		},
-		assert: func(t *testing.T, actual openapi3.T) {
-			//yml, err:= actual.MarshalYAML()
-			path := actual.Paths.Map()["/pets/{id}"]
-			if path == nil {
-				t.Errorf("path /pets/{id} not found")
-			}
-			if path.Get.Parameters.GetByInAndName("path", "id") == nil {
-				t.Errorf("parameter id was not bound")
-			}
+		{
+			name: "binding required supported",
+			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
+				engine.POST("/pets", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
+					p.AddRequest(struct {
+						Name string `json:"name" binding:"required"`
+					}{})
+				}))
+			},
+			assert: func(t *testing.T, actual openapi3.T) {
+				path := actual.Paths.Map()["/pets"]
+				json, err := path.Post.RequestBody.MarshalJSON()
+				if err != nil {
+					t.Errorf("failed to marshal a request body: %v", err)
+				}
+
+				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"name":{"type":"string"}},"required":["name"],"type":"object"}}}}` {
+					t.Errorf("unexpected request body: %s", string(json))
+				}
+
+			},
 		},
-	},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
