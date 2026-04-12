@@ -101,7 +101,28 @@ func TestSchema(t *testing.T) {
 				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"sex":{"enum":["male","female"],"type":"string"}},"required":["sex"],"type":"object"}}}}` {
 					t.Errorf("unexpected request body: %s", string(json))
 				}
-
+			},
+		},
+		{
+			name: "nested struct is supported. If an array field is marked as required, the type is not nullable.",
+			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
+				engine.POST("/pets", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
+					p.AddRequest(struct {
+						Pets []struct {
+							Name string `json:"name" binding:"required"`
+						} `json:"pets" binding:"required" description:"the list of pets"`
+					}{})
+				}))
+			},
+			assert: func(t *testing.T, actual openapi3.T) {
+				path := actual.Paths.Map()["/pets"]
+				json, err := path.Post.RequestBody.MarshalJSON()
+				if err != nil {
+					t.Errorf("failed to marshal a request body: %v", err)
+				}
+				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"pets":{"description":"the list of pets","items":{"properties":{"name":{"type":"string"}},"required":["name"],"type":"object"},"type":"array"}},"required":["pets"],"type":"object"}}}}` {
+					t.Errorf("unexpected request body: %s", string(json))
+				}
 			},
 		},
 	}
