@@ -90,7 +90,7 @@ func Example() {
 	}
 
 	fmt.Println(string(yml))
-	// openapi: 3.1.0
+	// Output: openapi: 3.1.0
 	// info:
 	//
 	//	license:

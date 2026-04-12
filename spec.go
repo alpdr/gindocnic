@@ -1,9 +1,5 @@
 package gindocnic
 
-// API全体の情報(ライセンスやAPIの説明)を指定するためのAPIを提供します。
-// これらのAPIは、指定しないとredocのlintが警告するので用意したであり、
-// 警告を消すためだけに用意しただけなので、GoからOpen APIの定義を生成できるか調べる上では重要な機能ではないです。
-// openapi31がメソッドチェーン形式のAPIなので、ひとまずメソッドチェーンの形式でAPIを実装しています。
 import (
 	"github.com/swaggest/openapi-go/openapi31"
 )

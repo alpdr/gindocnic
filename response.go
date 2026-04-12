@@ -12,11 +12,17 @@ func ResponseDescription(description string) responseOption {
 	}
 }
 
+func ResponseBody(body any) responseOption {
+	return func(r *responseOptions) {
+		r.body = body
+	}
+}
+
 func (o *PathItemSpec) AddResponse(body any, opts ...responseOption) {
 
 	r := responseOptions{
-		status: 200,
-		body:   body,
+		status:      200,
+		body:        body,
 		description: "",
 	}
 	for _, opt := range opts {
@@ -29,7 +35,7 @@ func (o *PathItemSpec) AddResponse(body any, opts ...responseOption) {
 type responseOption func(r *responseOptions)
 
 type responseOptions struct {
-	body   any
-	status int
+	body        any
+	status      int
 	description string
 }
