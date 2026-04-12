@@ -61,11 +61,11 @@ func TestSchema(t *testing.T) {
 			},
 		},
 		{
-			name: "binding required supported",
+			name: "binding and pattern are required supported",
 			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
 				engine.POST("/pets", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
 					p.AddRequest(struct {
-						Name string `json:"name" binding:"required"`
+						Name string `json:"name" binding:"required" pattern:"a-zA-Z+"`
 					}{})
 				}))
 			},
@@ -76,7 +76,7 @@ func TestSchema(t *testing.T) {
 					t.Errorf("failed to marshal a request body: %v", err)
 				}
 
-				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"name":{"type":"string"}},"required":["name"],"type":"object"}}}}` {
+				if string(json) != `{"content":{"application/json":{"schema":{"properties":{"name":{"pattern":"a-zA-Z+","type":"string"}},"required":["name"],"type":"object"}}}}` {
 					t.Errorf("unexpected request body: %s", string(json))
 				}
 
