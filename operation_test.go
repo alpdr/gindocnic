@@ -77,3 +77,31 @@ func TestRequestBody(t *testing.T) {
 	}
 
 }
+
+func TestOperationDescription(t *testing.T) {
+	t.Parallel()
+	t.Run("OperationDescription sets the description of the operation in the generated document", func(t *testing.T) {
+		t.Parallel()
+
+		sut := MakeDoc()
+		r := gin.New()
+		r.POST("/posts", sut.Operation(func(*gin.Context) {}, OperationDescription("A detailed description.")))
+		if err := sut.AssocRoutesInfo(r.Routes()); err != nil {
+			t.Fatal(err)
+		}
+		yml, err := sut.MarshalYAML()
+		if err != nil {
+			t.Fatal(err)
+		}
+		doc, err := openapi3.NewLoader().LoadFromData(yml)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		got := doc.Paths.Find("/posts").Post.Description
+		want := "A detailed description."
+		if got != want {
+			t.Errorf("OperationDescription() = %q, want %q", got, want)
+		}
+	})
+}

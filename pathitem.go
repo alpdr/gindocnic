@@ -10,16 +10,21 @@ import (
 // PathItemSpec represents the fields of a Path Item Object.
 // [path-item-object]: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-item-object
 type PathItemSpec struct {
-	httpMethod string
-	path       string
-	summary    string
-	requests   []requestOptions
-	responses  []responseOptions
-	id         string
+	httpMethod  string
+	path        string
+	summary     string
+	description string
+	requests    []requestOptions
+	responses   []responseOptions
+	id          string
 }
 
 func (o *PathItemSpec) SetSummary(s string) {
 	o.summary = s
+}
+
+func (o *PathItemSpec) SetDescription(s string) {
+	o.description = s
 }
 
 func (o *PathItemSpec) SetMethod(method string) {
@@ -61,6 +66,13 @@ func OperationSummary(summary string) PathItemSpecFunc {
 	}
 }
 
+// OperationDescription
+func OperationDescription(description string) PathItemSpecFunc {
+	return func(o *PathItemSpec) {
+		o.description = description
+	}
+}
+
 // OperationMethod
 func OperationMethod(method string) PathItemSpecFunc {
 	return func(o *PathItemSpec) {
@@ -90,6 +102,9 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 
 	oc.SetSummary(pathItemSpec.summary)
 	oc.SetID(pathItemSpec.id)
+	if pathItemSpec.description != "" {
+		oc.SetDescription(pathItemSpec.description)
+	}
 
 	for _, req := range pathItemSpec.requests {
 		if err != nil {
