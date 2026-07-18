@@ -30,3 +30,11 @@ func (d Doc) WithoutSecurities() Doc {
 func (s Server) swaggestServer() openapi31.Server {
 	return openapi31.Server{URL: s.URL}
 }
+
+// WithOpenAPIVersion sets the version of the OpenAPI Specification to [openapi-object.openapi].
+//
+// [openapi-object.openapi]: https://spec.openapis.org/oas/v3.1.0.html#openapi-object
+func (d Doc) WithOpenAPIVersion(version string) Doc {
+	d.reflector.Spec.Openapi = version
+	return d
+}
