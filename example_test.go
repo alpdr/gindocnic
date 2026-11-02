@@ -204,8 +204,6 @@ func Example() {
 	//             write:purchases: Purchase pets
 	//           tokenUrl: https://auth.example.com/oauth/token
 	//       type: oauth2
-	// security:
-	// - petStoreAuth: []
 
 }
 
