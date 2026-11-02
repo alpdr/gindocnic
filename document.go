@@ -52,11 +52,20 @@ func MakeDoc() Doc {
 					foundDive = true
 					continue
 				}
-				if !foundDive && strings.HasPrefix(element, "oneof=") {
-					choices := strings.TrimPrefix(element, "oneof=")
+				if choices, ok := strings.CutPrefix(element, "oneof="); ok {
 					choicesList := strings.Fields(choices)
-					for _, choice := range choicesList {
-						params.PropertySchema.Enum = append(params.PropertySchema.Enum, choice)
+					if foundDive {
+						items := params.PropertySchema.Items
+						if items == nil || items.SchemaOrBool == nil || items.SchemaOrBool.TypeObject == nil {
+							continue
+						}
+						for _, choice := range choicesList {
+							items.SchemaOrBool.TypeObject.Enum = append(items.SchemaOrBool.TypeObject.Enum, choice)
+						}
+					} else {
+						for _, choice := range choicesList {
+							params.PropertySchema.Enum = append(params.PropertySchema.Enum, choice)
+						}
 					}
 				}
 			}
