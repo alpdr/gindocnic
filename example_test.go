@@ -11,61 +11,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AddPetRequest struct {
-	ID         int    `json:"id" binding:"required"`
-	Name       string `json:"name" pattern:"^[a-zA-Z]+$"`
-	Sex        string `json:"sex" binding:"oneof=male female"`
-	CustomerID string `header:"customerId" description:"identifies a customer"`
-	TrackingID string `cookie:"trackingId"`
-}
-
-type Response struct {
-	Id int `json:"id"`
-}
-
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
-func (h *Handler) addSpec(p *gindocnic.PathItemSpec) {
-	p.SetSummary("Add a new pet to the store")
-	p.AddRequest(AddPetRequest{})
-	p.AddResponse(Response{}, gindocnic.ResponseStatus(http.StatusCreated))
-	p.AddResponse(ErrorResponse{}, gindocnic.ResponseStatus(http.StatusBadRequest))
-}
-func (h *Handler) addPet(c *gin.Context) {}
-
-type GetPetRequest struct {
-	ID int `uri:"id"`
-}
-
-func (h *Handler) getSpec(p *gindocnic.PathItemSpec) {
-	p.SetSummary("Find a pet")
-	p.AddRequest(GetPetRequest{})
-	p.AddResponse(Response{})
-	p.AddResponse(ErrorResponse{}, gindocnic.ResponseStatus(http.StatusNotFound))
-}
-func (h *Handler) getPet(c *gin.Context) {}
-
-type SearchPetsRequest struct {
-	Name string `query:"name"`
-}
-
-func (h *Handler) searchSpec(p *gindocnic.PathItemSpec) {
-	p.SetSummary("Search for pets")
-	p.AddRequest(SearchPetsRequest{})
-	p.AddResponse(Response{})
-	p.AddResponse(ErrorResponse{}, gindocnic.ResponseStatus(http.StatusNotFound))
-}
-func (h *Handler) searchPets(c *gin.Context) {}
-
-type Handler struct{}
-
 // Example
 func Example() {
 	doc := gindocnic.MakeDoc().
 		WithServer(gindocnic.Server{URL: "https://github.com/alpdr/gindocnic"}).
-		WithoutSecurities().
+		WithOAuthAuthorizationCode("petStoreAuth", gindocnic.OAuthAuthorizationCode{
+			AuthorizationURL: "https://auth.example.com/oauth/authorize",
+			TokenURL:         "https://auth.example.com/oauth/token",
+			Scopes:           map[string]string{"write:purchases": "Purchase pets"},
+		}).
 		WithSummary("example API").
 		WithLicense(gindocnic.License{Name: "Proprietary", URL: "https://uzabase.com"})
 
@@ -80,6 +34,7 @@ func Example() {
 	r.POST("/pets", doc.Operation(handler.addPet, handler.addSpec))
 	r.GET("/pets/{id}", doc.Operation(handler.getPet, handler.getSpec))
 	r.GET("/pets", doc.Operation(handler.searchPets, handler.searchSpec))
+	r.POST("/purchases", doc.Operation(handler.purchase, handler.purchaseSpec))
 	if err := doc.AssocRoutesInfo(r.Routes()); err != nil {
 		log.Fatalf("%#v", err)
 	}
@@ -89,7 +44,7 @@ func Example() {
 		log.Fatalf("%#v", err)
 	}
 
-	fmt.Println(string(yml))
+	fmt.Print(string(yml))
 	// Output: openapi: 3.1.0
 	// info:
 	//   license:
@@ -103,7 +58,7 @@ func Example() {
 	// paths:
 	//   /pets:
 	//     get:
-	//       operationId: pets1
+	//       operationId: pets2
 	//       parameters:
 	//       - in: query
 	//         name: name
@@ -157,7 +112,7 @@ func Example() {
 	//       summary: Add a new pet to the store
 	//   /pets/{id}:
 	//     get:
-	//       operationId: petsid2
+	//       operationId: petsid3
 	//       parameters:
 	//       - in: path
 	//         name: id
@@ -178,6 +133,31 @@ func Example() {
 	//                 $ref: '#/components/schemas/GindocnicTestErrorResponse'
 	//           description: Not Found
 	//       summary: Find a pet
+	//   /purchases:
+	//     post:
+	//       operationId: purchases1
+	//       requestBody:
+	//         content:
+	//           application/json:
+	//             schema:
+	//               $ref: '#/components/schemas/GindocnicTestPurchaseRequest'
+	//       responses:
+	//         "201":
+	//           content:
+	//             application/json:
+	//               schema:
+	//                 $ref: '#/components/schemas/GindocnicTestResponse'
+	//           description: Created
+	//         "400":
+	//           content:
+	//             application/json:
+	//               schema:
+	//                 $ref: '#/components/schemas/GindocnicTestErrorResponse'
+	//           description: Bad Request
+	//       security:
+	//       - petStoreAuth:
+	//         - write:purchases
+	//       summary: Purchase a pet
 	// components:
 	//   schemas:
 	//     GindocnicTestAddPetRequest:
@@ -200,12 +180,95 @@ func Example() {
 	//         error:
 	//           type: string
 	//       type: object
+	//     GindocnicTestPurchaseRequest:
+	//       properties:
+	//         petId:
+	//           type: integer
+	//         quantity:
+	//           type: integer
+	//       required:
+	//       - petId
+	//       - quantity
+	//       type: object
 	//     GindocnicTestResponse:
 	//       properties:
 	//         id:
 	//           type: integer
 	//       type: object
+	//   securitySchemes:
+	//     petStoreAuth:
+	//       flows:
+	//         authorizationCode:
+	//           authorizationUrl: https://auth.example.com/oauth/authorize
+	//           scopes:
+	//             write:purchases: Purchase pets
+	//           tokenUrl: https://auth.example.com/oauth/token
+	//       type: oauth2
 	// security:
-	// - {}
+	// - petStoreAuth: []
 
 }
+
+type AddPetRequest struct {
+	ID         int    `json:"id" binding:"required"`
+	Name       string `json:"name" pattern:"^[a-zA-Z]+$"`
+	Sex        string `json:"sex" binding:"oneof=male female"`
+	CustomerID string `header:"customerId" description:"identifies a customer"`
+	TrackingID string `cookie:"trackingId"`
+}
+
+type Response struct {
+	Id int `json:"id"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func (h *Handler) addSpec(p *gindocnic.PathItemSpec) {
+	p.SetSummary("Add a new pet to the store")
+	p.AddRequest(AddPetRequest{})
+	p.AddResponse(Response{}, gindocnic.ResponseStatus(http.StatusCreated))
+	p.AddResponse(ErrorResponse{}, gindocnic.ResponseStatus(http.StatusBadRequest))
+}
+func (h *Handler) addPet(c *gin.Context) {}
+
+type GetPetRequest struct {
+	ID int `uri:"id"`
+}
+
+func (h *Handler) getSpec(p *gindocnic.PathItemSpec) {
+	p.SetSummary("Find a pet")
+	p.AddRequest(GetPetRequest{})
+	p.AddResponse(Response{})
+	p.AddResponse(ErrorResponse{}, gindocnic.ResponseStatus(http.StatusNotFound))
+}
+func (h *Handler) getPet(c *gin.Context) {}
+
+type SearchPetsRequest struct {
+	Name string `query:"name"`
+}
+
+func (h *Handler) searchSpec(p *gindocnic.PathItemSpec) {
+	p.SetSummary("Search for pets")
+	p.AddRequest(SearchPetsRequest{})
+	p.AddResponse(Response{})
+	p.AddResponse(ErrorResponse{}, gindocnic.ResponseStatus(http.StatusNotFound))
+}
+func (h *Handler) searchPets(c *gin.Context) {}
+
+type PurchaseRequest struct {
+	PetID    int `json:"petId" binding:"required"`
+	Quantity int `json:"quantity" binding:"required"`
+}
+
+func (h *Handler) purchaseSpec(p *gindocnic.PathItemSpec) {
+	p.SetSummary("Purchase a pet")
+	p.AddRequest(PurchaseRequest{})
+	p.AddResponse(Response{}, gindocnic.ResponseStatus(http.StatusCreated))
+	p.AddResponse(ErrorResponse{}, gindocnic.ResponseStatus(http.StatusBadRequest))
+	gindocnic.SetSecurity("petStoreAuth", []string{"write:purchases"})(p)
+}
+func (h *Handler) purchase(c *gin.Context) {}
+
+type Handler struct{}
