@@ -104,6 +104,30 @@ func TestSchema(t *testing.T) {
 			},
 		},
 		{
+			name: "'dive' with 'oneof' constrains items of the array to the given enum values.",
+			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
+				engine.POST("/pets", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
+					p.AddRequest(struct {
+						Search struct {
+							Fields []string `json:"fields" binding:"dive,oneof=name species"`
+							Text   string   `json:"text"`
+						} `json:"search"`
+					}{})
+				}))
+			},
+			assert: func(t *testing.T, actual openapi3.T) {
+				path := actual.Paths.Map()["/pets"]
+				got, err := path.Post.RequestBody.MarshalJSON()
+				if err != nil {
+					t.Errorf("MarshalJSON() error: %v", err)
+				}
+				want := `{"content":{"application/json":{"schema":{"properties":{"search":{"properties":{"fields":{"items":{"enum":["name","species"],"type":"string"},"type":["array","null"]},"text":{"type":"string"}},"type":"object"}},"type":"object"}}}}`
+				if string(got) != want {
+					t.Errorf("AddRequest(dive,oneof) = %s, want %s", string(got), want)
+				}
+			},
+		},
+		{
 			name: "nested struct is supported. If an array field is marked as required, the type is not nullable.",
 			act: func(t *testing.T, engine *gin.Engine, doc Doc) {
 				engine.POST("/pets", doc.Operation(func(*gin.Context) {}, func(p *PathItemSpec) {
