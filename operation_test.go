@@ -139,30 +139,54 @@ func TestSetSecurity(t *testing.T) {
 	}
 }
 
-func TestOperationDescription(t *testing.T) {
+func TestPathItemSpecFunc(t *testing.T) {
 	t.Parallel()
-	t.Run("OperationDescription sets the description of the operation in the generated document", func(t *testing.T) {
-		t.Parallel()
+	tests := []struct {
+		name   string
+		opt    PathItemSpecFunc
+		assert func(t *testing.T, op *openapi3.Operation)
+	}{
+		{
+			name: "OperationID sets the operation ID of the operation in the generated document",
+			opt:  OperationID("createPost"),
+			assert: func(t *testing.T, op *openapi3.Operation) {
+				got, want := op.OperationID, "createPost"
+				if got != want {
+					t.Errorf("OperationID(%q) = %q, want %q", want, got, want)
+				}
+			},
+		},
+		{
+			name: "OperationDescription sets the description of the operation in the generated document",
+			opt:  OperationDescription("A detailed description."),
+			assert: func(t *testing.T, op *openapi3.Operation) {
+				got, want := op.Description, "A detailed description."
+				if got != want {
+					t.Errorf("OperationDescription(%q) = %q, want %q", want, got, want)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-		sut := MakeDoc()
-		r := gin.New()
-		r.POST("/posts", sut.Operation(func(*gin.Context) {}, OperationDescription("A detailed description.")))
-		if err := sut.AssocRoutesInfo(r.Routes()); err != nil {
-			t.Fatal(err)
-		}
-		yml, err := sut.MarshalYAML()
-		if err != nil {
-			t.Fatal(err)
-		}
-		doc, err := openapi3.NewLoader().LoadFromData(yml)
-		if err != nil {
-			t.Fatal(err)
-		}
+			sut := MakeDoc()
+			r := gin.New()
+			r.POST("/posts", sut.Operation(func(*gin.Context) {}, tt.opt))
+			if err := sut.AssocRoutesInfo(r.Routes()); err != nil {
+				t.Fatal(err)
+			}
+			yml, err := sut.MarshalYAML()
+			if err != nil {
+				t.Fatal(err)
+			}
+			doc, err := openapi3.NewLoader().LoadFromData(yml)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		got := doc.Paths.Find("/posts").Post.Description
-		want := "A detailed description."
-		if got != want {
-			t.Errorf("OperationDescription() = %q, want %q", got, want)
-		}
-	})
+			tt.assert(t, doc.Paths.Find("/posts").Post)
+		})
+	}
 }
