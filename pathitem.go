@@ -73,6 +73,15 @@ func OperationDescription(description string) PathItemSpecFunc {
 	}
 }
 
+// OperationID sets the operation ID in the [Operation Object].
+//
+// [Operation Object]: https://spec.openapis.org/oas/v3.1.0.html#operation-object
+func OperationID(id string) PathItemSpecFunc {
+	return func(o *PathItemSpec) {
+		o.id = id
+	}
+}
+
 // OperationMethod
 func OperationMethod(method string) PathItemSpecFunc {
 	return func(o *PathItemSpec) {
