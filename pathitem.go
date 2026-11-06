@@ -7,13 +7,6 @@ import (
 	"github.com/swaggest/openapi-go/openapi31"
 )
 
-// operationSecurity holds the security requirement for a single operation.
-// The zero value (empty name) means no operation-level security is set.
-type operationSecurity struct {
-	name   string
-	scopes []string
-}
-
 // PathItemSpec represents the fields of a Path Item Object.
 // [path-item-object]: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-item-object
 type PathItemSpec struct {
@@ -24,7 +17,7 @@ type PathItemSpec struct {
 	requests    []requestOptions
 	responses   []responseOptions
 	id          string
-	security    operationSecurity
+	security    SecurityItem
 }
 
 func (o *PathItemSpec) SetSummary(s string) {
