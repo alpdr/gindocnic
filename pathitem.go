@@ -81,7 +81,7 @@ func SetSecurity(name string, scopes []string) PathItemSpecFunc {
 		scopes = []string{}
 	}
 	return func(o *PathItemSpec) {
-		o.security = operationSecurity{name: name, scopes: scopes}
+		o.security = SecurityItem{Name: name, Scopes: scopes}
 	}
 }
 
@@ -126,9 +126,9 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	if pathItemSpec.description != "" {
 		oc.SetDescription(pathItemSpec.description)
 	}
-	if pathItemSpec.security.name != "" {
+	if pathItemSpec.security.Name != "" {
 		op := oc.(openapi31.OperationExposer).Operation()
-		op.Security = []map[string][]string{{pathItemSpec.security.name: pathItemSpec.security.scopes}}
+		op.Security = []map[string][]string{{pathItemSpec.security.Name: pathItemSpec.security.Scopes}}
 	}
 
 	for _, req := range pathItemSpec.requests {
