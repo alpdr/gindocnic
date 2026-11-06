@@ -17,7 +17,7 @@ type PathItemSpec struct {
 	requests    []requestOptions
 	responses   []responseOptions
 	id          string
-	security    SecurityItem
+	security    *SecurityItem
 }
 
 func (o *PathItemSpec) SetSummary(s string) {
@@ -81,7 +81,14 @@ func SetSecurity(name string, scopes []string) PathItemSpecFunc {
 		scopes = []string{}
 	}
 	return func(o *PathItemSpec) {
-		o.security = SecurityItem{Name: name, Scopes: scopes}
+		o.security = &SecurityItem{Name: name, Scopes: scopes}
+	}
+}
+
+// Same as `SetSecurity("", nil)`
+func SetEmptySecurity() PathItemSpecFunc {
+	return func(o *PathItemSpec) {
+		o.security = &SecurityItem{}
 	}
 }
 
@@ -126,9 +133,23 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	if pathItemSpec.description != "" {
 		oc.SetDescription(pathItemSpec.description)
 	}
-	if pathItemSpec.security.Name != "" {
+	if pathItemSpec.security != nil {
+		security := *(pathItemSpec.security)
 		op := oc.(openapi31.OperationExposer).Operation()
-		op.Security = []map[string][]string{{pathItemSpec.security.Name: pathItemSpec.security.Scopes}}
+		if security.Name != "" {
+			op.Security = []map[string][]string{{security.Name: security.Scopes}}
+		} else {
+			// Workaround: swaggest silently ignores empty list of Security objects (by 'json:"security,omitempty' tag), so we can not
+			//             use empty list `[]map[string][]string{}` for expressing `security: []`.
+			//             MapOfAnything is for Specification Extensions of OpenAPI which users can append user-defined new field `x-my-own-field` with.
+			//             Swaggest suppose the fields begin with the literal `x-`, but never verifies the supplied field name, so we can add
+			//             the `security` field with MapOfAnything. It might be unsupposed use of MapOfAnything, only for workaround.
+			op.Security = nil
+			if op.MapOfAnything == nil {
+				op.MapOfAnything = map[string]interface{}{}
+			}
+			op.MapOfAnything["security"] = []interface{}{}
+		}
 	}
 
 	for _, req := range pathItemSpec.requests {
