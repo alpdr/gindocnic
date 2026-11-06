@@ -27,6 +27,23 @@ func (d Doc) WithoutSecurities() Doc {
 	return d
 }
 
+// Security holds the security requirement for a single operation.
+// You can use this at both of the top-level `security:` block and operation-level `security:` block.
+// If you want to specify no security requirement, use WithoutSecurities().
+type SecurityItem struct {
+	name   string
+	scopes []string
+}
+
+func (d Doc) WithSecurities(securities []SecurityItem) Doc {
+	secMap := make(map[string][]string)
+	for _, s := range securities {
+		secMap[s.name] = s.scopes
+	}
+	d.reflector.Spec.WithSecurity(secMap)
+	return d
+}
+
 func (s Server) swaggestServer() openapi31.Server {
 	return openapi31.Server{URL: s.URL}
 }
