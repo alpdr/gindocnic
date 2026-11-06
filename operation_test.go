@@ -2,11 +2,12 @@ package gindocnic
 
 import (
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/gin-gonic/gin"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/gin-gonic/gin"
 )
 
 func TestRequestBody(t *testing.T) {
@@ -76,6 +77,66 @@ func TestRequestBody(t *testing.T) {
 		})
 	}
 
+}
+
+func TestSetSecurity(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		spec   PathItemSpecFunc
+		assert func(t *testing.T, secReqs *openapi3.SecurityRequirements)
+	}{
+		{
+			name: "SetSecurity sets an operation-level security requirement that overrides the global default",
+			spec: SetSecurity("petStoreAuth", []string{"read:pets"}),
+			assert: func(t *testing.T, secReqs *openapi3.SecurityRequirements) {
+				if secReqs == nil {
+					t.Fatal("SetSecurity(): security is nil")
+				}
+				if got, want := len(*secReqs), 1; got != want {
+					t.Fatalf("SetSecurity(): len(security) = %d, want %d", got, want)
+				}
+				scopes, ok := (*secReqs)[0]["petStoreAuth"]
+				if !ok {
+					t.Fatal("SetSecurity(): petStoreAuth not found in operation security")
+				}
+				if got, want := len(scopes), 1; got != want {
+					t.Fatalf("SetSecurity(): len(scopes) = %d, want %d", got, want)
+				}
+				if got, want := scopes[0], "read:pets"; got != want {
+					t.Errorf("SetSecurity(): scopes[0] = %q, want %q", got, want)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			sut := MakeDoc().WithOAuthClientCredentials("petStoreAuth", OAuthClientCredentials{
+				TokenURL: "https://auth.example.com/oauth/token",
+				Scopes:   map[string]string{"read:pets": "read pets"},
+			})
+			r := gin.New()
+			r.GET("/pets", sut.Operation(func(*gin.Context) {}, tt.spec))
+			if err := sut.AssocRoutesInfo(r.Routes()); err != nil {
+				t.Fatal(err)
+			}
+			yml, err := sut.MarshalYAML()
+			if err != nil {
+				t.Fatal(err)
+			}
+			doc, err := openapi3.NewLoader().LoadFromData(yml)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			op := doc.Paths.Find("/pets").Get
+			tt.assert(t, op.Security)
+		})
+	}
 }
 
 func TestPathItemSpecFunc(t *testing.T) {

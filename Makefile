@@ -15,6 +15,7 @@ build: ##@ Builds the project
 
 lint: ##@ Examines source code and reports suspicious constructs
 	go vet ./...
+	test -z "$(shell gofmt -l .)"
 
 GIT_TAG ?= v0.0.0
 
