@@ -124,3 +124,35 @@ func TestWithOpenAPIVersion(t *testing.T) {
 		}
 	})
 }
+
+func TestWithSecurityItem(t *testing.T) {
+	t.Parallel()
+	t.Run("the specified OpenAPI version appears in the generated document", func(t *testing.T) {
+		t.Parallel()
+
+		sut := MakeDoc().WithSecurities([]SecurityItem{SecurityItem{"BearerAuth", []string{"read"}}})
+
+		bytes, err := sut.MarshalYAML()
+		if err != nil {
+			t.Fatalf("failed to marshal: %v", err)
+		}
+
+		doc, err := openapi3.NewLoader().LoadFromData(bytes)
+		if err != nil {
+			t.Fatalf("failed to load generated YAML: %v", err)
+		}
+
+		if len(doc.Security) != 1 {
+			t.Errorf("Security component count = %d, want: %d", len(doc.Security), 1)
+		}
+
+		securityReq := doc.Security[0]
+		bearerAuthScopes := securityReq["BearerAuth"]
+		if len(bearerAuthScopes) != 1 {
+			t.Errorf("the count of scopes of `BearerAuth` element was %d, want %d", len(bearerAuthScopes), 1)
+		}
+		if bearerAuthScopes[0] != "read" {
+			t.Errorf("Scopes of `BearerAuth` must be `read`")
+		}
+	})
+}
