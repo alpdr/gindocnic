@@ -36,15 +36,19 @@ type SecurityItem struct {
 }
 
 func (d Doc) WithSecurities(securities []SecurityItem) Doc {
-	secMap := make(map[string][]string)
-	for _, s := range securities {
-		scopes := s.Scopes
-		if scopes == nil {
-			scopes = []string{}
+	if len(securities) == 0 {
+		d.reflector.Spec.WithSecurity()
+	} else {
+		secMap := make(map[string][]string)
+		for _, s := range securities {
+			scopes := s.Scopes
+			if scopes == nil {
+				scopes = []string{}
+			}
+			secMap[s.Name] = scopes
 		}
-		secMap[s.Name] = scopes
+		d.reflector.Spec.WithSecurity(secMap)
 	}
-	d.reflector.Spec.WithSecurity(secMap)
 	return d
 }
 
