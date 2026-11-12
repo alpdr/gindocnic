@@ -88,7 +88,16 @@ func TestSetSecurity(t *testing.T) {
 		assert func(t *testing.T, secReqs *openapi3.SecurityRequirements)
 	}{
 		{
-			name: "SetSecurity sets an operation-level security requirement that overrides the global default",
+			name: "If no SetSecurity() is called, security should be nil",
+			spec: func(o *PathItemSpec) {},
+			assert: func(t *testing.T, secReqs *openapi3.SecurityRequirements) {
+				if secReqs != nil {
+					t.Fatal("Expected security to be nil when no SetSecurity() is called")
+				}
+			},
+		},
+		{
+			name: "SetSecurity sets an operation-level security requirement",
 			spec: SetSecurity("petStoreAuth", []string{"read:pets"}),
 			assert: func(t *testing.T, secReqs *openapi3.SecurityRequirements) {
 				if secReqs == nil {
@@ -106,6 +115,32 @@ func TestSetSecurity(t *testing.T) {
 				}
 				if got, want := scopes[0], "read:pets"; got != want {
 					t.Errorf("SetSecurity(): scopes[0] = %q, want %q", got, want)
+				}
+			},
+		},
+		{
+			name: "SetSecurity with empty name sets an operation-level security requirement as security: []",
+			spec: SetSecurity("", []string{}),
+			assert: func(t *testing.T, secReqs *openapi3.SecurityRequirements) {
+				if secReqs == nil {
+					t.Fatal("SetSecurity(): security is nil")
+				}
+				// Since security is empty, there should be no security requirements
+				if got, want := len(*secReqs), 0; got != want {
+					t.Fatalf("SetSecurity(): len(security) = %d, want %d", got, want)
+				}
+			},
+		},
+		{
+			name: "SetEmptySecurity works as security: []",
+			spec: SetEmptySecurity(),
+			assert: func(t *testing.T, secReqs *openapi3.SecurityRequirements) {
+				if secReqs == nil {
+					t.Fatal("SetSecurity(): security is nil")
+				}
+				// Since security is empty, there should be no security requirements
+				if got, want := len(*secReqs), 0; got != want {
+					t.Fatalf("SetSecurity(): len(security) = %d, want %d", got, want)
 				}
 			},
 		},

@@ -7,13 +7,6 @@ import (
 	"github.com/swaggest/openapi-go/openapi31"
 )
 
-// operationSecurity holds the security requirement for a single operation.
-// The zero value (empty name) means no operation-level security is set.
-type operationSecurity struct {
-	name   string
-	scopes []string
-}
-
 // PathItemSpec represents the fields of a Path Item Object.
 // [path-item-object]: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#path-item-object
 type PathItemSpec struct {
@@ -24,7 +17,7 @@ type PathItemSpec struct {
 	requests    []requestOptions
 	responses   []responseOptions
 	id          string
-	security    operationSecurity
+	security    *SecurityItem
 }
 
 func (o *PathItemSpec) SetSummary(s string) {
@@ -88,7 +81,14 @@ func SetSecurity(name string, scopes []string) PathItemSpecFunc {
 		scopes = []string{}
 	}
 	return func(o *PathItemSpec) {
-		o.security = operationSecurity{name: name, scopes: scopes}
+		o.security = &SecurityItem{Name: name, Scopes: scopes}
+	}
+}
+
+// Same as `SetSecurity("", nil)`
+func SetEmptySecurity() PathItemSpecFunc {
+	return func(o *PathItemSpec) {
+		o.security = &SecurityItem{}
 	}
 }
 
@@ -133,9 +133,23 @@ func addPathItem(reflector *openapi31.Reflector, pathItemSpec PathItemSpec) erro
 	if pathItemSpec.description != "" {
 		oc.SetDescription(pathItemSpec.description)
 	}
-	if pathItemSpec.security.name != "" {
+	if pathItemSpec.security != nil {
+		security := *(pathItemSpec.security)
 		op := oc.(openapi31.OperationExposer).Operation()
-		op.Security = []map[string][]string{{pathItemSpec.security.name: pathItemSpec.security.scopes}}
+		if security.Name != "" {
+			op.Security = []map[string][]string{{security.Name: security.Scopes}}
+		} else {
+			// Workaround: swaggest silently ignores empty list of Security objects (by 'json:"security,omitempty' tag), so we can not
+			//             use empty list `[]map[string][]string{}` for expressing `security: []`.
+			//             MapOfAnything is for Specification Extensions of OpenAPI which users can append user-defined new field `x-my-own-field` with.
+			//             Swaggest suppose the fields begin with the literal `x-`, but never verifies the supplied field name, so we can add
+			//             the `security` field with MapOfAnything. It might be unsupposed use of MapOfAnything, only for workaround.
+			op.Security = nil
+			if op.MapOfAnything == nil {
+				op.MapOfAnything = map[string]interface{}{}
+			}
+			op.MapOfAnything["security"] = []interface{}{}
+		}
 	}
 
 	for _, req := range pathItemSpec.requests {
